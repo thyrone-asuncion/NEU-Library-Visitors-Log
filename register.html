@@ -675,6 +675,12 @@
     const programSel   = document.getElementById('programSelect');
     clearErr('collegeSelect');
 
+    // Faculty never sees the program dropdown — college only
+    if (selectedType === 'Faculty') {
+      programGroup.style.display = 'none';
+      return;
+    }
+
     if (!collegeName) { programGroup.style.display = 'none'; return; }
 
     const programs = NEU_COLLEGES[collegeName] || [];
