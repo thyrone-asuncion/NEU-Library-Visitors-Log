@@ -626,7 +626,7 @@
       currentUser = data;
       setAlert('');
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getPHDate();
       const { data: logs } = await db
         .from('visitor_logs').select('*')
         .eq('user_id', data.id).eq('status', 'IN').eq('date', today)
@@ -676,6 +676,12 @@
     }, delayMs);
   }
 
+  // Philippine time date helper (UTC+8)
+  function getPHDate() {
+    const ph = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+    return ph.toISOString().split('T')[0];
+  }
+
   async function doLogin() {
     if (!selectedPurpose) { showToast('Please select a purpose of visit.', 'warning'); return; }
     if (selectedPurpose === 'Others' && !document.getElementById('specificPurpose').value.trim()) {
@@ -688,7 +694,7 @@
         user_id: currentUser.id, purpose: selectedPurpose,
         specific_purpose: spec || null,
         time_in: now.toISOString(), status: 'IN',
-        date: now.toISOString().split('T')[0]
+        date: getPHDate()
       }).select().single();
       if (error) throw error;
       activeLogId = data.log_id;

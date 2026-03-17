@@ -619,6 +619,10 @@
       if (!document.getElementById('programSelect').value) {
         showErr('programSelect', 'Please select a program.'); return false;
       }
+    } else if (selectedType === 'Faculty') {
+      if (!document.getElementById('collegeSelect').value) {
+        showErr('collegeSelect', 'Please select your college/department.'); return false;
+      }
     } else {
       if (!document.getElementById('officeSelect').value) {
         showErr('officeSelect', 'Please select an office.'); return false;
@@ -629,20 +633,27 @@
 
   // ── Build Department Section ─────────────────────────────
   function buildDeptSection() {
-    const isStudent = selectedType === 'Student';
-    document.getElementById('studentDeptSection').style.display = isStudent ? 'block' : 'none';
-    document.getElementById('officeSection').style.display      = isStudent ? 'none'  : 'block';
-    document.getElementById('deptTitle').innerHTML = isStudent
-      ? '🏫 College &amp; Program'
-      : '🏢 Administrative Office';
+    const showCollege = selectedType === 'Student' || selectedType === 'Faculty';
+    document.getElementById('studentDeptSection').style.display = showCollege ? 'block' : 'none';
+    document.getElementById('officeSection').style.display      = selectedType === 'Employee' ? 'block' : 'none';
 
-    if (isStudent) {
+    if (selectedType === 'Student') {
+      document.getElementById('deptTitle').innerHTML = '🏫 College &amp; Program';
+    } else if (selectedType === 'Faculty') {
+      document.getElementById('deptTitle').innerHTML = '🏫 College / Department';
+      // Faculty only picks college, no program needed — hide program dropdown
+      document.getElementById('programGroup').style.display = 'none';
+    } else {
+      document.getElementById('deptTitle').innerHTML = '🏢 Administrative Office';
+    }
+
+    if (showCollege) {
       const sel = document.getElementById('collegeSelect');
+      sel.querySelector('option').textContent = '— Select College / Department —';
       if (sel.options.length <= 1) {
         Object.keys(NEU_COLLEGES).sort().forEach(college => {
           const opt = document.createElement('option');
-          opt.value = college;
-          opt.textContent = college;
+          opt.value = college; opt.textContent = college;
           sel.appendChild(opt);
         });
       }
@@ -691,6 +702,9 @@
     if (selectedType === 'Student') {
       collegeDept = document.getElementById('collegeSelect').value;
       program     = document.getElementById('programSelect').value;
+    } else if (selectedType === 'Faculty') {
+      collegeDept = document.getElementById('collegeSelect').value;
+      program     = null; // Faculty don't have a specific program
     } else {
       collegeDept = document.getElementById('officeSelect').value;
     }
