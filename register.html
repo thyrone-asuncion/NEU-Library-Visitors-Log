@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEU Library — Register</title>
-  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/en/4/41/New_Era_University_seal.png" />
+  <!--
+    Place neu-logo.png in the same folder as this file.
+    It will appear in the header and browser tab favicon.
+  -->
+  <link rel="icon" href="neu-logo.png" type="image/png" />
   <link rel="stylesheet" href="style.css" />
   <style>
     .register-body {
@@ -13,7 +17,7 @@
       justify-content: center;
       min-height: calc(100vh - 72px);
       padding: 32px 16px;
-      background: linear-gradient(135deg, var(--blue-pale) 0%, var(--gray-50) 60%, var(--gold-pale) 100%);
+      background: linear-gradient(135deg, var(--blue-pale) 0%, var(--gray-50) 60%, #fdf8e1 100%);
     }
 
     .register-wrap {
@@ -50,6 +54,65 @@
       color: var(--gray-500);
     }
 
+    /* ── Progress Steps ─────────────────────────── */
+    .progress-bar-wrap { margin-bottom: 28px; }
+
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .progress-step .p-dot {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: 2.5px solid var(--gray-300);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--gray-400);
+      transition: var(--transition);
+      position: relative;
+      z-index: 1;
+    }
+
+    .progress-step.done   .p-dot { background: var(--green);    border-color: var(--green);    color: var(--white); }
+    .progress-step.active .p-dot { background: var(--blue-dark); border-color: var(--blue-dark); color: var(--white); box-shadow: 0 0 0 4px rgba(26,58,95,.15); }
+
+    .progress-step .p-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--gray-400);
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    .progress-step.active .p-label { color: var(--blue-dark); }
+    .progress-step.done   .p-label { color: var(--green); }
+
+    .p-line {
+      flex: 1;
+      height: 2.5px;
+      background: var(--gray-200);
+      min-width: 50px;
+      margin-bottom: 22px;
+      transition: background .3s;
+    }
+
+    .p-line.done { background: var(--green); }
+
+    /* ── User Type Cards ────────────────────────── */
     .type-selector {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -60,7 +123,7 @@
     .type-card {
       border: 2px solid var(--gray-200);
       border-radius: var(--radius-md);
-      padding: 16px 12px;
+      padding: 18px 12px;
       text-align: center;
       cursor: pointer;
       transition: var(--transition);
@@ -78,82 +141,44 @@
       color: var(--white);
     }
 
-    .type-card .type-icon { font-size: 28px; margin-bottom: 8px; }
-    .type-card .type-label { font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+    .type-card .type-icon  { font-size: 30px; margin-bottom: 8px; }
+    .type-card .type-label { font-size: 13px; font-weight: 700; letter-spacing: .03em; }
     .type-card .type-desc  { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
-    .type-card.selected .type-desc { color: rgba(255,255,255,.65); }
+    .type-card.selected .type-desc { color: rgba(255,255,255,.6); }
 
-    .progress-bar-wrap {
-      margin-bottom: 28px;
+    /* ── Success view ───────────────────────────── */
+    .success-view {
+      text-align: center;
+      padding: 40px 24px;
     }
 
-    .progress-steps {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      margin-bottom: 6px;
+    .success-icon {
+      font-size: 64px;
+      display: block;
+      margin-bottom: 20px;
+      animation: bounceIn .5s ease;
     }
 
-    .progress-step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      position: relative;
+    @keyframes bounceIn {
+      0%   { transform: scale(0); opacity: 0; }
+      60%  { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
     }
 
-    .progress-step .p-dot {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      border: 2.5px solid var(--gray-300);
-      background: var(--white);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--gray-400);
-      transition: var(--transition);
-      position: relative;
-      z-index: 1;
+    .success-view h2 { font-size: 24px; font-weight: 800; color: var(--blue-dark); margin-bottom: 10px; }
+    .success-view p  { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; }
+
+    .id-display {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
     }
 
-    .progress-step.done .p-dot {
-      background: var(--green);
-      border-color: var(--green);
-      color: var(--white);
-    }
-
-    .progress-step.active .p-dot {
-      background: var(--blue-dark);
-      border-color: var(--blue-dark);
-      color: var(--white);
-      box-shadow: 0 0 0 4px rgba(26,58,95,.15);
-    }
-
-    .progress-step .p-label {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--gray-400);
-      white-space: nowrap;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-
-    .progress-step.active .p-label { color: var(--blue-dark); }
-    .progress-step.done  .p-label  { color: var(--green); }
-
-    .p-line {
-      flex: 1;
-      height: 2px;
-      background: var(--gray-200);
-      min-width: 40px;
-      margin-bottom: 22px;
-      transition: background .3s;
-    }
-
-    .p-line.done { background: var(--green); }
+    .id-display .id-label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .08em; }
+    .id-display .id-val   { font-family: 'Courier New', monospace; font-size: 20px; font-weight: 700; color: var(--blue-dark); display: block; margin-top: 4px; }
 
     .login-back {
       text-align: center;
@@ -173,56 +198,8 @@
 
     .login-back a:hover { color: var(--gold-dark); }
 
-    .success-view {
-      text-align: center;
-      padding: 40px 24px;
-    }
-
-    .success-icon {
-      font-size: 64px;
-      display: block;
-      margin-bottom: 20px;
-      animation: bounceIn .5s ease;
-    }
-
-    @keyframes bounceIn {
-      0%   { transform: scale(0); opacity: 0; }
-      60%  { transform: scale(1.15); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    .success-view h2 {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--blue-dark);
-      margin-bottom: 10px;
-    }
-
-    .success-view p {
-      font-size: 14px;
-      color: var(--gray-500);
-      margin-bottom: 24px;
-    }
-
-    .id-display {
-      background: var(--gray-100);
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-md);
-      padding: 16px;
-      font-size: 13px;
-      color: var(--gray-700);
-      margin-bottom: 24px;
-      text-align: left;
-    }
-
-    .id-display .id-val {
-      font-family: 'Courier New', monospace;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--blue-dark);
-      display: block;
-      margin-top: 4px;
-    }
+    /* program input text box */
+    #programTextInput { display: none; }
   </style>
 </head>
 <body>
@@ -230,9 +207,9 @@
 <header class="neu-header">
   <a href="index.html" class="header-brand">
     <div class="header-logo">
-      <img src="https://upload.wikimedia.org/wikipedia/en/4/41/New_Era_University_seal.png"
+      <img src="neu-logo.png"
            alt="NEU Logo"
-           onerror="this.style.display='none'; this.parentElement.textContent='NEU';" />
+           onerror="this.style.display='none'; this.parentElement.insertAdjacentText('beforeend','NEU');" />
     </div>
     <div class="header-title">
       <span class="uni-name">New Era University</span>
@@ -256,7 +233,7 @@
       <p>Register to access NEU Library services</p>
     </div>
 
-    <!-- Progress -->
+    <!-- Progress indicator -->
     <div class="progress-bar-wrap">
       <div class="progress-steps">
         <div class="progress-step active" id="pStep1">
@@ -284,9 +261,9 @@
     <div class="card">
       <div id="alertBox"></div>
 
-      <!-- Step 1: User Type -->
+      <!-- ═══ STEP 1: User Type ═══ -->
       <div id="step1" class="card-body">
-        <h3 class="section-title">👤 User Type</h3>
+        <h3 class="section-title">👤 Select User Type</h3>
         <div class="type-selector">
           <div class="type-card" onclick="selectType('Student', this)">
             <div class="type-icon">🎓</div>
@@ -304,104 +281,103 @@
             <div class="type-desc">Administrative staff</div>
           </div>
         </div>
-        <div class="field-error show" id="typeError" style="display:none!important; visibility:hidden;">Please select a user type.</div>
-        <div style="margin-top:20px; text-align:right;">
-          <button class="btn btn-primary" onclick="goStep(2)">Next → Personal Info</button>
+        <div style="margin-top:24px; text-align:right;">
+          <button class="btn btn-primary btn-lg" onclick="goStep(2)">Next → Personal Info</button>
         </div>
       </div>
 
-      <!-- Step 2: Personal Info -->
+      <!-- ═══ STEP 2: Personal Info ═══ -->
       <div id="step2" class="card-body" style="display:none;">
         <h3 class="section-title">📋 Personal Information</h3>
         <div class="form-row">
           <div class="form-group">
             <label for="firstName">First Name <span class="req">*</span></label>
-            <input type="text" id="firstName" class="form-control" placeholder="Juan" />
-            <div class="field-error" id="firstNameError">Required.</div>
+            <input type="text" id="firstName" class="form-control" placeholder="e.g. Juan" />
+            <div class="field-error" id="firstNameError">First name is required.</div>
           </div>
           <div class="form-group">
             <label for="middleInitial">Middle Initial</label>
-            <input type="text" id="middleInitial" class="form-control" placeholder="D" maxlength="2" />
-            <div class="field-hint">Optional — e.g. D</div>
+            <input type="text" id="middleInitial" class="form-control" placeholder="e.g. D" maxlength="2" />
+            <div class="field-hint">Optional</div>
           </div>
         </div>
         <div class="form-group">
           <label for="lastName">Surname <span class="req">*</span></label>
-          <input type="text" id="lastName" class="form-control" placeholder="Dela Cruz" />
-          <div class="field-error" id="lastNameError">Required.</div>
+          <input type="text" id="lastName" class="form-control" placeholder="e.g. Dela Cruz" />
+          <div class="field-error" id="lastNameError">Surname is required.</div>
         </div>
         <div class="form-group">
           <label for="idNumber">ID Number <span class="req">*</span></label>
           <input type="text" id="idNumber" class="form-control"
                  placeholder="e.g. 24-00001-001 · F0001 · E0001" />
-          <div class="field-hint" id="idHint">Student: XX-XXXXX-XXX | Faculty: FX… | Employee: EX…</div>
-          <div class="field-error" id="idError">Invalid ID format.</div>
+          <div class="field-hint" id="idHint">Student: XX-XXXXX-XXX &nbsp;|&nbsp; Faculty: FX… &nbsp;|&nbsp; Employee: EX…</div>
+          <div class="field-error" id="idNumberError">Invalid ID format.</div>
         </div>
         <div class="form-group">
           <label for="email">Institutional Email <span class="req">*</span></label>
           <input type="email" id="email" class="form-control"
-                 placeholder="juan.delacruz@neu.edu.ph" />
+                 placeholder="e.g. juan.delacruz@neu.edu.ph" />
           <div class="field-hint">Must be @neu.edu.ph</div>
           <div class="field-error" id="emailError">Must be a valid @neu.edu.ph email.</div>
         </div>
         <div style="display:flex; gap:10px; justify-content:space-between; margin-top:8px;">
           <button class="btn btn-outline" onclick="goStep(1)">← Back</button>
-          <button class="btn btn-primary" onclick="goStep(3)">Next → Department</button>
+          <button class="btn btn-primary btn-lg" onclick="goStep(3)">Next → Department</button>
         </div>
       </div>
 
-      <!-- Step 3: Department -->
+      <!-- ═══ STEP 3: Department ═══ -->
       <div id="step3" class="card-body" style="display:none;">
-        <h3 class="section-title" id="deptTitle">🏫 Department & Program</h3>
+        <h3 class="section-title" id="deptTitle">🏫 College &amp; Program</h3>
 
-        <!-- Student selects -->
+        <!-- Students -->
         <div id="studentDeptSection">
           <div class="form-group">
             <label for="collegeSelect">College / Department <span class="req">*</span></label>
             <select id="collegeSelect" class="form-control" onchange="onCollegeChange()">
               <option value="">— Select College —</option>
             </select>
-            <div class="field-error" id="collegeError">Please select a college.</div>
+            <div class="field-error" id="collegeSelectError">Please select a college.</div>
           </div>
           <div class="form-group" id="programGroup" style="display:none;">
             <label for="programSelect">Program <span class="req">*</span></label>
             <select id="programSelect" class="form-control">
               <option value="">— Select Program —</option>
             </select>
-            <div class="field-error" id="programError">Please select a program.</div>
+            <div class="field-error" id="programSelectError">Please select a program.</div>
           </div>
         </div>
 
-        <!-- Faculty/Employee selects -->
+        <!-- Faculty / Employee -->
         <div id="officeSection" style="display:none;">
           <div class="form-group">
             <label for="officeSelect">Administrative Office / Field <span class="req">*</span></label>
             <select id="officeSelect" class="form-control">
               <option value="">— Select Office —</option>
             </select>
-            <div class="field-error" id="officeError">Please select an office.</div>
+            <div class="field-error" id="officeSelectError">Please select an office.</div>
           </div>
         </div>
 
         <div style="display:flex; gap:10px; justify-content:space-between; margin-top:8px;">
-          <button class="btn btn-outline" onclick="goStep(2)">← Back</button>
-          <button class="btn btn-gold btn-lg" onclick="submitRegistration()">
+          <button class="btn btn-outline btn-lg" onclick="goStep(2)">← Back</button>
+          <button class="btn btn-primary btn-lg" onclick="submitRegistration()">
             🎉 Complete Registration
           </button>
         </div>
       </div>
 
-      <!-- Step 4: Success -->
+      <!-- ═══ STEP 4: Success ═══ -->
       <div id="step4" class="card-body" style="display:none;">
         <div class="success-view">
           <span class="success-icon">🎉</span>
           <h2>Registration Successful!</h2>
           <p>Your account has been created. You can now log in to the library.</p>
           <div class="id-display">
-            <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.08em;">Your Library ID</div>
+            <div class="id-label">Your Library ID</div>
             <span class="id-val" id="successId">—</span>
           </div>
-          <a href="index.html" class="btn btn-gold btn-lg btn-full">
+          <a href="index.html" class="btn btn-primary btn-lg btn-full">
             🏛️ Proceed to Library Login
           </a>
         </div>
@@ -419,6 +395,119 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
+  // ══════════════════════════════════════════════════════
+  //  Complete NEU College & Program Data
+  // ══════════════════════════════════════════════════════
+  const NEU_COLLEGES = {
+    "College of Accountancy": [
+      "Bachelor of Science in Accountancy",
+      "Bachelor of Science in Accounting Information System"
+    ],
+    "College of Agriculture": [
+      "Bachelor of Science in Agriculture"
+    ],
+    "College of Arts and Sciences": [
+      "Bachelor of Arts in Economics",
+      "Bachelor of Arts in Political Science",
+      "Bachelor of Science in Biology",
+      "Bachelor of Science in Psychology",
+      "Bachelor of Public Administration"
+    ],
+    "College of Business Administration": [
+      "Bachelor of Science in Business Administration Major in Financial Management",
+      "Bachelor of Science in Business Administration Major in Human Resource Development Management",
+      "Bachelor of Science in Business Administration Major in Legal Management",
+      "Bachelor of Science in Business Administration Major in Marketing Management",
+      "Bachelor of Science in Entrepreneurship",
+      "Bachelor of Science in Real Estate Management"
+    ],
+    "College of Communication": [
+      "Bachelor of Arts in Broadcasting",
+      "Bachelor of Arts in Communication",
+      "Bachelor of Arts in Journalism"
+    ],
+    "College of Informatics and Computing Studies": [
+      "Bachelor of Library and Information Science",
+      "Bachelor of Science in Computer Science",
+      "Bachelor of Science in Entertainment and Multimedia Computing with Specialization in Digital Animation Technology",
+      "Bachelor of Science in Entertainment and Multimedia Computing with Specialization in Game Development",
+      "Bachelor of Science in Information Technology",
+      "Bachelor of Science in Information System"
+    ],
+    "College of Criminology": [
+      "Bachelor of Science in Criminology"
+    ],
+    "College of Education": [
+      "Bachelor of Elementary Education",
+      "Bachelor of Elementary Education with Specialization in Preschool Education",
+      "Bachelor of Elementary Education with Specialization in Special Education",
+      "Bachelor of Secondary Education Major in Music, Arts, and Physical Education",
+      "Bachelor of Secondary Education Major in English",
+      "Bachelor of Secondary Education Major in Filipino",
+      "Bachelor of Secondary Education Major in Mathematics",
+      "Bachelor of Secondary Education Major in Science",
+      "Bachelor of Secondary Education Major in Social Studies",
+      "Bachelor of Secondary Education Major in Technology and Livelihood Education"
+    ],
+    "College of Engineering and Architecture": [
+      "Bachelor of Science in Architecture",
+      "Bachelor of Science in Astronomy",
+      "Bachelor of Science in Civil Engineering",
+      "Bachelor of Science in Electrical Engineering",
+      "Bachelor of Science in Electronics Engineering",
+      "Bachelor of Science in Industrial Engineering",
+      "Bachelor of Science in Mechanical Engineering"
+    ],
+    "College of Medical Technology": [
+      "Bachelor of Science in Medical Technology"
+    ],
+    "College of Midwifery": [
+      "Diploma in Midwifery"
+    ],
+    "College of Music": [
+      "Bachelor of Music in Choral Conducting",
+      "Bachelor of Music in Music Education",
+      "Bachelor of Music in Piano",
+      "Bachelor of Music in Voice"
+    ],
+    "College of Nursing": [
+      "Bachelor of Science in Nursing"
+    ],
+    "College of Physical Therapy": [
+      "Bachelor of Science in Physical Therapy"
+    ],
+    "College of Respiratory Therapy": [
+      "Bachelor of Science in Respiratory Therapy"
+    ],
+    "School of International Relations": [
+      "Bachelor of Arts in Foreign Service"
+    ]
+  };
+
+  const NEU_ADMIN_OFFICES = [
+    "Office of the President",
+    "Office of the Vice President for Academic Affairs",
+    "Office of the Vice President for Administration",
+    "Registrar's Office",
+    "Admissions Office",
+    "Finance Office / Cashier",
+    "Human Resources Department",
+    "Information Technology Center",
+    "Research and Development Office",
+    "Student Affairs and Services",
+    "Library Services",
+    "Guidance and Counseling Center",
+    "Physical Plant and Facilities",
+    "Public Relations Office",
+    "Alumni Affairs Office",
+    "Medical and Dental Clinic",
+    "Security Office",
+    "Maintenance Department",
+    "Canteen / Food Services",
+    "Bookstore"
+  ];
+
+  // ── State ───────────────────────────────────────────────
   let selectedType = null;
 
   // ── Toast ────────────────────────────────────────────────
@@ -427,7 +516,7 @@
     const tc = document.getElementById('toast-container');
     const t  = document.createElement('div');
     t.className = `toast ${type}`;
-    t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+    t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
     tc.appendChild(t);
     setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 320); }, duration);
   }
@@ -436,18 +525,20 @@
     const el = document.getElementById('alertBox');
     if (!msg) { el.innerHTML = ''; return; }
     const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
-    el.style.padding = '0 28px';
-    el.style.paddingTop = '16px';
+    el.style.padding = '0 28px'; el.style.paddingTop = '16px';
     el.innerHTML = `<div class="alert alert-${type}"><span class="alert-icon">${icons[type]}</span><div>${msg}</div></div>`;
   }
 
-  // ── User Type ────────────────────────────────────────────
+  // ── User Type selection ──────────────────────────────────
   function selectType(type, el) {
     selectedType = type;
     document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
-    // Update ID hint
-    const hints = { Student: 'Format: XX-XXXXX-XXX (e.g. 24-00001-001)', Faculty: 'Format: FX… (e.g. F0001)', Employee: 'Format: EX… (e.g. E0001)' };
+    const hints = {
+      Student:  'Format: XX-XXXXX-XXX (e.g. 24-00001-001)',
+      Faculty:  'Format: FX… (e.g. F0001)',
+      Employee: 'Format: EX… (e.g. E0001)'
+    };
     document.getElementById('idHint').textContent = hints[type] || '';
   }
 
@@ -456,46 +547,42 @@
     for (let i = 1; i <= 4; i++) {
       const s = document.getElementById('pStep' + i);
       s.classList.remove('active', 'done');
-      if (i < current) s.classList.add('done');
+      if (i < current)  s.classList.add('done');
       if (i === current) s.classList.add('active');
-      if (i < 4) {
-        const l = document.getElementById('pLine' + i);
-        l.classList.toggle('done', i < current);
-      }
+      if (i < 4) document.getElementById('pLine' + i).classList.toggle('done', i < current);
     }
   }
 
+  // ── Step Navigation ──────────────────────────────────────
   function goStep(n) {
     setAlert('');
     if (n === 2 && !validateStep1()) return;
     if (n === 3 && !validateStep2()) return;
-
     if (n === 3) buildDeptSection();
-
     for (let i = 1; i <= 4; i++) {
       document.getElementById('step' + i).style.display = i === n ? 'block' : 'none';
     }
     updateProgress(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ── Validation ───────────────────────────────────────────
+  // ── Validation helpers ───────────────────────────────────
   function clearErr(id) {
-    document.getElementById(id).classList.remove('error');
-    const errEl = document.getElementById(id + 'Error');
-    if (errEl) errEl.classList.remove('show');
+    const inp = document.getElementById(id);
+    if (inp) inp.classList.remove('error');
+    const err = document.getElementById(id + 'Error');
+    if (err) err.classList.remove('show');
   }
 
-  function showErr(inputId, msg) {
-    const inp = document.getElementById(inputId);
+  function showErr(id, msg) {
+    const inp = document.getElementById(id);
     if (inp) inp.classList.add('error');
-    const errEl = document.getElementById(inputId + 'Error');
-    if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
+    const err = document.getElementById(id + 'Error');
+    if (err) { err.textContent = msg; err.classList.add('show'); }
   }
 
   function validateStep1() {
-    if (!selectedType) {
-      showToast('Please select a user type.', 'warning'); return false;
-    }
+    if (!selectedType) { showToast('Please select a user type.', 'warning'); return false; }
     return true;
   }
 
@@ -509,21 +596,18 @@
     if (!document.getElementById('lastName').value.trim()) {
       showErr('lastName', 'Surname is required.'); ok = false;
     }
-
     const id = document.getElementById('idNumber').value.trim();
     if (!id) {
       showErr('idNumber', 'ID number is required.'); ok = false;
     } else if (!validateID(id)) {
-      showErr('idNumber', 'Invalid ID format for selected user type.'); ok = false;
+      showErr('idNumber', 'Invalid ID format for the selected user type.'); ok = false;
     }
-
     const email = document.getElementById('email').value.trim();
     if (!email) {
       showErr('email', 'Email is required.'); ok = false;
     } else if (!validateNEUEmail(email)) {
       showErr('email', 'Must be a valid @neu.edu.ph email.'); ok = false;
     }
-
     return ok;
   }
 
@@ -543,29 +627,31 @@
     return true;
   }
 
-  // ── Build Department Section ──────────────────────────────
+  // ── Build Department Section ─────────────────────────────
   function buildDeptSection() {
     const isStudent = selectedType === 'Student';
     document.getElementById('studentDeptSection').style.display = isStudent ? 'block' : 'none';
-    document.getElementById('officeSection').style.display      = isStudent ? 'none' : 'block';
-    document.getElementById('deptTitle').textContent = isStudent ? '🏫 College & Program' : '🏢 Administrative Office';
+    document.getElementById('officeSection').style.display      = isStudent ? 'none'  : 'block';
+    document.getElementById('deptTitle').innerHTML = isStudent
+      ? '🏫 College &amp; Program'
+      : '🏢 Administrative Office';
 
     if (isStudent) {
       const sel = document.getElementById('collegeSelect');
       if (sel.options.length <= 1) {
-        NEU_DATA.colleges.forEach(c => {
+        Object.keys(NEU_COLLEGES).sort().forEach(college => {
           const opt = document.createElement('option');
-          opt.value = c.id;
-          opt.textContent = c.name;
+          opt.value = college;
+          opt.textContent = college;
           sel.appendChild(opt);
         });
       }
     } else {
       const sel = document.getElementById('officeSelect');
       if (sel.options.length <= 1) {
-        NEU_DATA.adminOffices.forEach(o => {
+        NEU_ADMIN_OFFICES.forEach(office => {
           const opt = document.createElement('option');
-          opt.value = o; opt.textContent = o;
+          opt.value = office; opt.textContent = office;
           sel.appendChild(opt);
         });
       }
@@ -573,48 +659,46 @@
   }
 
   function onCollegeChange() {
-    const collegeId = document.getElementById('collegeSelect').value;
+    const collegeName  = document.getElementById('collegeSelect').value;
     const programGroup = document.getElementById('programGroup');
     const programSel   = document.getElementById('programSelect');
+    clearErr('collegeSelect');
 
-    if (!collegeId) { programGroup.style.display = 'none'; return; }
+    if (!collegeName) { programGroup.style.display = 'none'; return; }
 
-    const college = NEU_DATA.colleges.find(c => c.id === collegeId);
+    const programs = NEU_COLLEGES[collegeName] || [];
     programSel.innerHTML = '<option value="">— Select Program —</option>';
-    if (college) {
-      college.programs.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p; opt.textContent = p;
-        programSel.appendChild(opt);
-      });
-    }
+    programs.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      programSel.appendChild(opt);
+    });
     programGroup.style.display = 'block';
   }
 
-  // ── Submit ───────────────────────────────────────────────
+  // ── Submit Registration ──────────────────────────────────
   async function submitRegistration() {
     if (!validateStep3()) return;
     setAlert('Creating your account…', 'info');
 
-    const id       = document.getElementById('idNumber').value.trim().toUpperCase();
-    const email    = document.getElementById('email').value.trim().toLowerCase();
+    const id        = document.getElementById('idNumber').value.trim().toUpperCase();
+    const email     = document.getElementById('email').value.trim().toLowerCase();
     const firstName = document.getElementById('firstName').value.trim();
-    const mi       = document.getElementById('middleInitial').value.trim().replace('.','').toUpperCase();
-    const lastName = document.getElementById('lastName').value.trim();
+    const mi        = document.getElementById('middleInitial').value.trim().replace('.','').toUpperCase();
+    const lastName  = document.getElementById('lastName').value.trim();
 
     let collegeDept = null, program = null;
     if (selectedType === 'Student') {
-      const cId = document.getElementById('collegeSelect').value;
-      const col = NEU_DATA.colleges.find(c => c.id === cId);
-      collegeDept = col ? col.name : null;
+      collegeDept = document.getElementById('collegeSelect').value;
       program     = document.getElementById('programSelect').value;
     } else {
       collegeDept = document.getElementById('officeSelect').value;
     }
 
     try {
-      // Check for existing ID or email
-      const { data: existing } = await db.from('profiles')
+      // Check for duplicate ID or email
+      const { data: existing } = await db
+        .from('profiles')
         .select('id, email')
         .or(`id.eq.${id},email.eq.${email}`);
 
@@ -625,12 +709,13 @@
       }
 
       const { error } = await db.from('profiles').insert({
-        id:             id,
+        id,
         first_name:     firstName,
         middle_initial: mi || null,
         last_name:      lastName,
-        email:          email,
+        email,
         user_type:      selectedType,
+        role:           'user',
         college_dept:   collegeDept,
         program:        program || null,
         status:         'active',
@@ -639,15 +724,14 @@
 
       if (error) throw error;
 
+      // Success!
       document.getElementById('successId').textContent = id;
       for (let i = 1; i <= 4; i++) {
         document.getElementById('step' + i).style.display = i === 4 ? 'block' : 'none';
       }
       updateProgress(4);
       setAlert('');
-      showToast('Account created successfully!', 'success', 5000);
-
-      // Redirect after 4 seconds
+      showToast('Registration successful! Redirecting in 5 seconds…', 'success', 5000);
       setTimeout(() => { window.location.href = 'index.html'; }, 5000);
 
     } catch (e) {
