@@ -430,7 +430,7 @@
     <!-- Post-login welcome -->
     <div class="welcome-panel" id="welcomePanel">
       <div class="welcome-avatar" id="welcomeAvatar">👤</div>
-      <div class="welcome-greeting">Welcome back</div>
+      <div class="welcome-greeting" id="welcomeGreeting">Welcome back</div>
       <div class="welcome-name" id="welcomeName">—</div>
       <div class="welcome-dept" id="welcomeDept">—</div>
       <div class="welcome-info-chip" id="welcomeProgram">—</div>
@@ -506,7 +506,7 @@
             <input type="text" id="specificPurpose" class="form-control"
                    placeholder="Describe your purpose…" />
           </div>
-          <button class="btn btn-gold btn-full btn-lg" onclick="doLogin()" style="margin-top:6px;">
+          <button class="btn btn-full btn-lg" onclick="doLogin()" style="margin-top:6px;background:linear-gradient(135deg,var(--blue-dark),var(--blue-mid));color:var(--white);box-shadow:0 2px 8px rgba(26,58,95,.25);">
             ✅ Log In to Library
           </button>
           <button class="btn btn-outline btn-full btn-sm" onclick="resetForm()" style="margin-top:10px;">
@@ -662,6 +662,20 @@
     }
   }
 
+  // Fades out the welcome panel after a delay, then resets
+  function fadeOutWelcome(delayMs) {
+    setTimeout(() => {
+      const panel = document.getElementById('welcomePanel');
+      panel.style.transition = 'opacity 1s ease';
+      panel.style.opacity = '0';
+      setTimeout(() => {
+        panel.style.transition = '';
+        panel.style.opacity    = '';
+        resetForm();
+      }, 1000);
+    }, delayMs);
+  }
+
   async function doLogin() {
     if (!selectedPurpose) { showToast('Please select a purpose of visit.', 'warning'); return; }
     if (selectedPurpose === 'Others' && !document.getElementById('specificPurpose').value.trim()) {
@@ -678,11 +692,19 @@
       }).select().single();
       if (error) throw error;
       activeLogId = data.log_id;
-      showToast(`Welcome, ${currentUser.first_name}! Logged in at ${formatTime(now.toISOString())}`, 'success', 5000);
+
+      // Update left panel: greeting stays "Welcome back", show time badge
+      document.getElementById('welcomeGreeting').textContent = 'Welcome back';
       document.getElementById('alreadyInNote').innerHTML =
         `<div class="already-in-badge">✅ Logged in at ${formatTime(now.toISOString())}</div>`;
+
+      showToast(`Welcome, ${currentUser.first_name}! Logged in at ${formatTime(now.toISOString())}`, 'success', 5000);
       setStep(1);
       document.getElementById('identifier').value = '';
+
+      // Fade out welcome panel after 5 seconds
+      fadeOutWelcome(5000);
+
     } catch (e) {
       showToast('Failed to log in. Please try again.', 'error');
       console.error(e);
@@ -697,12 +719,21 @@
         .update({ time_out: now.toISOString(), status: 'OUT' })
         .eq('log_id', activeLogId);
       if (error) throw error;
+
+      // Update left panel: change greeting to Goodbye
+      document.getElementById('welcomeGreeting').textContent = 'Goodbye 👋';
       document.getElementById('alreadyInNote').innerHTML =
         `<div class="already-in-badge" style="border-color:rgba(212,175,55,.4);color:var(--gold-light);">
            👋 Logged out at ${formatTime(now.toISOString())}
          </div>`;
+
       showToast(`Goodbye, ${currentUser.first_name}! Have a great day!`, 'success', 5000);
-      resetForm();
+      setStep(1);
+      document.getElementById('identifier').value = '';
+
+      // Fade out welcome panel after 5 seconds then fully reset
+      fadeOutWelcome(5000);
+
     } catch (e) {
       showToast('Failed to log out. Please try again.', 'error');
       console.error(e);
@@ -718,6 +749,9 @@
     setStep(1);
     document.getElementById('defaultView').style.display = 'block';
     document.getElementById('welcomePanel').classList.remove('show');
+    document.getElementById('welcomePanel').style.opacity = '';
+    document.getElementById('welcomeGreeting').textContent = 'Welcome back';
+    document.getElementById('alreadyInNote').innerHTML = '';
   }
 
   document.addEventListener('DOMContentLoaded', () => {
