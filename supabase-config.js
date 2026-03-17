@@ -4,7 +4,7 @@
 // ============================================================
 
 const SUPABASE_URL = 'https://npiwaifgypxgjsvyxiec.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_cfkO6MxXiAmZj5YOfLNO6g_Ck7I8vyl';
+const SUPABASE_ANON_KEY = 'sb_publishable_fWBl3L7FmfxZ5kN9Vv4Zmw_3ztw_2N3';
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
