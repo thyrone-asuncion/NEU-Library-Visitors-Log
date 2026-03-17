@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEU Library — Visitor Login</title>
+  <!--
+    ══════════════════════════════════════════════════════
+    HOW TO USE YOUR OWN IMAGES IN VS CODE:
+    ──────────────────────────────────────────────────────
+    1. LOGO:    Place  neu-logo.png   in the same folder as this file.
+                It will appear in the header and browser tab icon.
+
+    2. LIBRARY PHOTO:
+                Place  neu-library.jpg  (or .png) in the same folder.
+                This becomes the full left-pane background.
+                Rename to match whatever filename you use on line ~180.
+    ══════════════════════════════════════════════════════
+  -->
+  <link rel="icon" href="neu-logo.png" type="image/png" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { overflow-x: hidden; }
+
+    .landing-body {
+      display: flex;
+      min-height: calc(100vh - 72px);
+    }
+
+    /* ════════════════════════════════════════
+       LEFT PANE — full bleed background photo
+    ════════════════════════════════════════ */
+    .left-pane {
+      flex: 0 0 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      min-height: 100%;
+    }
+
+    /* Background image fills entire pane */
+    .left-bg-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      animation: kenBurns 22s ease-in-out infinite alternate;
+    }
+
+    @keyframes kenBurns {
+      from { transform: scale(1.00); }
+      to   { transform: scale(1.07); }
+    }
+
+    /* Dark gradient overlay for text legibility */
+    .left-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 24, 46, 0.25) 0%,
+        rgba(10, 24, 46, 0.45) 35%,
+        rgba(10, 24, 46, 0.78) 72%,
+        rgba(10, 24, 46, 0.93) 100%
+      );
+    }
+
+    /* Thin gold line along the left edge */
+    .left-overlay::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      width: 3px;
+      background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+      opacity: .6;
+    }
+
+    /* Quote sits over the overlay at the bottom of the pane */
+    .quote-block {
+      position: relative;
+      z-index: 2;
+      padding: 0 52px 56px;
+    }
+
+    .quote-mark-big {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 100px;
+      line-height: .55;
+      color: var(--gold);
+      opacity: .5;
+      display: block;
+      margin-bottom: 18px;
+      user-select: none;
+    }
+
+    .quote-text {
+      font-size: 17.5px;
+      font-style: italic;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.94);
+      line-height: 1.85;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 14px rgba(0,0,0,.65);
+      max-width: 440px;
+    }
+
+    .quote-ref {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .quote-ref::before {
+      content: '';
+      width: 28px;
+      height: 2px;
+      background: var(--gold);
+      border-radius: 99px;
+      display: inline-block;
+    }
+
+    /* ── Welcome panel (post-login) ── */
+    .welcome-panel {
+      display: none;
+      position: relative;
+      z-index: 2;
+      padding: 0 52px 56px;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .welcome-panel.show { display: flex; }
+
+    .welcome-avatar {
+      width: 82px; height: 82px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--blue-dark);
+      border: 3px solid rgba(255,255,255,.22);
+      box-shadow: 0 8px 30px rgba(212,175,55,.50);
+    }
+
+    .welcome-greeting {
+      font-size: 11px;
+      color: rgba(255,255,255,.55);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .welcome-name {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.15;
+      text-shadow: 0 3px 14px rgba(0,0,0,.55);
+    }
+
+    .welcome-dept {
+      font-size: 14px;
+      color: var(--gold-light);
+      font-weight: 600;
+    }
+
+    .welcome-info-chip {
+      display: inline-block;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 99px;
+      padding: 5px 16px;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      font-weight: 500;
+      width: fit-content;
+    }
+
+    .already-in-badge {
+      background: rgba(22,163,74,.18);
+      border: 1.5px solid rgba(22,163,74,.38);
+      color: #4ade80;
+      border-radius: var(--radius-md);
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+    }
+
+    /* ════════════════════════════════════════
+       RIGHT PANE — flat white, no card box
+    ════════════════════════════════════════ */
+    .right-pane {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 52px 60px;
+      background: var(--white);
+    }
+
+    .login-form-wrap {
+      width: 100%;
+      max-width: 390px;
+    }
+
+    /* Form heading */
+    .form-heading {
+      margin-bottom: 36px;
+    }
+
+    .form-heading .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold-dark);
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .form-heading .eyebrow::before {
+      content: '';
+      width: 22px;
+      height: 2.5px;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+      border-radius: 99px;
+      display: inline-block;
+    }
+
+    .form-heading h1 {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--blue-dark);
+      line-height: 1.15;
+      margin-bottom: 8px;
+    }
+
+    .form-heading p {
+      font-size: 13.5px;
+      color: var(--gray-400);
+    }
+
+    /* Step dots */
+    .step-indicator {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .step-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      transition: var(--transition);
+    }
+
+    .step-dot.active {
+      background: var(--gold);
+      width: 28px;
+      border-radius: 99px;
+    }
+
+    /* Purpose chips */
+    .purpose-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .purpose-chip {
+      padding: 9px 10px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      background: var(--white);
+    }
+
+    .purpose-chip:hover {
+      border-color: var(--blue-light);
+      color: var(--blue-dark);
+      background: var(--blue-pale);
+    }
+
+    .purpose-chip.selected {
+      border-color: var(--blue-dark);
+      background: var(--blue-dark);
+      color: var(--white);
+    }
+
+    /* Divider */
+    .form-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0;
+      color: var(--gray-300);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .form-divider::before, .form-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+
+    /* Register link */
+    .register-link {
+      text-align: center;
+      font-size: 13px;
+      color: var(--gray-400);
+    }
+
+    .register-link a {
+      color: var(--blue-dark);
+      font-weight: 700;
+      text-decoration: none;
+      border-bottom: 1.5px solid var(--gold);
+      padding-bottom: 1px;
+      transition: var(--transition);
+    }
+
+    .register-link a:hover { color: var(--gold-dark); }
+
+    /* User found info strip */
+    #userFoundBox {
+      background: var(--blue-pale);
+      border: 1.5px solid #bfdbfe;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--blue-dark);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    /* ── Responsive ─────────────────────────── */
+    @media (max-width: 900px) {
+      .landing-body { flex-direction: column; }
+      .left-pane { flex: 0 0 280px; min-height: 280px; }
+      .quote-block, .welcome-panel { padding: 0 28px 32px; }
+      .quote-text { font-size: 14.5px; }
+      .right-pane { padding: 36px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="neu-header">
+  <a href="index.html" class="header-brand">
+    <div class="header-logo">
+      <img src="neu-logo.png"
+           alt="NEU Logo"
+           onerror="this.style.display='none'; this.parentElement.insertAdjacentText('beforeend','NEU');" />
+    </div>
+    <div class="header-title">
+      <span class="uni-name">New Era University</span>
+      <span class="lib-name">NEU Library</span>
+    </div>
+  </a>
+  <div class="header-actions">
+    <a href="admin-login.html" class="admin-key-btn" title="Admin Portal">🔑</a>
+  </div>
+</header>
+<div class="gold-bar"></div>
+
+<div id="toast-container"></div>
+
+<!-- ── Layout ──────────────────────────────────────────────── -->
+<div class="landing-body">
+
+  <!-- ══ LEFT PANE — library photo + quote overlay ════════ -->
+  <div class="left-pane">
+
+    <!--
+      Replace "neu-library.jpg" with the filename of your actual photo.
+      Just drop the image file in the same folder as index.html in VS Code.
+    -->
+    <img
+      class="left-bg-img"
+      src="neu-library.jpg"
+      alt="NEU Library"
+      onerror="this.style.display='none'; this.closest('.left-pane').style.background='linear-gradient(175deg,#1a3a5f 0%,#0d2440 100%)';"
+    />
+
+    <div class="left-overlay"></div>
+
+    <!-- Default: Bible verse -->
+    <div class="quote-block" id="defaultView">
+      <span class="quote-mark-big">"</span>
+      <p class="quote-text">
+        Ang isipan ng matalino ay naghahangad ng kaalaman,
+        at ang pakinig ng pantas ay humahanap ng kaalaman.
+      </p>
+      <span class="quote-ref">Kawikaan 18:15</span>
+    </div>
+
+    <!-- Post-login welcome -->
+    <div class="welcome-panel" id="welcomePanel">
+      <div class="welcome-avatar" id="welcomeAvatar">👤</div>
+      <div class="welcome-greeting">Welcome back</div>
+      <div class="welcome-name" id="welcomeName">—</div>
+      <div class="welcome-dept" id="welcomeDept">—</div>
+      <div class="welcome-info-chip" id="welcomeProgram">—</div>
+      <div id="alreadyInNote"></div>
+    </div>
+
+  </div>
+
+  <!-- ══ RIGHT PANE — flat, no card box ═══════════════════ -->
+  <div class="right-pane">
+    <div class="login-form-wrap">
+
+      <div class="form-heading">
+        <div class="eyebrow">Library Visitor Log</div>
+        <h1>Sign In</h1>
+        <p>Enter your ID or email to record your visit.</p>
+      </div>
+
+      <div class="step-indicator">
+        <div class="step-dot active" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+      </div>
+
+      <div id="alertBox"></div>
+
+      <!-- Step 1: ID / Email lookup -->
+      <div id="step1">
+        <div class="form-group">
+          <label for="identifier">Student ID / Faculty ID / Email <span class="req">*</span></label>
+          <input type="text" id="identifier" class="form-control"
+                 placeholder="e.g. 24-00001-001 or name@neu.edu.ph"
+                 autocomplete="off" />
+          <div class="field-hint">Student: XX-XXXXX-XXX &nbsp;·&nbsp; Faculty: FX… &nbsp;·&nbsp; Employee: EX… &nbsp;·&nbsp; @neu.edu.ph</div>
+          <div class="field-error" id="identifierError">Invalid ID or email format.</div>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" onclick="lookupUser()">
+          🔍 Look Up
+        </button>
+        <div class="form-divider">or</div>
+        <div class="register-link">
+          Not yet registered? <a href="register.html">Register Here →</a>
+        </div>
+      </div>
+
+      <!-- Step 2: Purpose / Logout -->
+      <div id="step2" style="display:none;">
+
+        <div id="userFoundBox"></div>
+
+        <!-- Already logged in -->
+        <div id="alreadyLoggedBox" style="display:none;">
+          <div class="alert alert-warning" style="margin-bottom:14px;">
+            <span class="alert-icon">⚠️</span>
+            <div>
+              <strong>Already Checked In</strong><br/>
+              You're currently inside. Log out now?
+            </div>
+          </div>
+          <button class="btn btn-gold btn-full btn-lg" onclick="doLogout()" style="margin-bottom:10px;">
+            🚪 Log Out Now
+          </button>
+          <button class="btn btn-outline btn-full btn-sm" onclick="resetForm()">← Change ID</button>
+        </div>
+
+        <!-- Purpose form -->
+        <div id="purposeForm">
+          <div class="form-group">
+            <label>Purpose of Visit <span class="req">*</span></label>
+            <div class="purpose-grid" id="purposeChips"></div>
+          </div>
+          <div class="form-group" id="othersGroup" style="display:none;">
+            <label for="specificPurpose">Please specify <span class="req">*</span></label>
+            <input type="text" id="specificPurpose" class="form-control"
+                   placeholder="Describe your purpose…" />
+          </div>
+          <button class="btn btn-gold btn-full btn-lg" onclick="doLogin()" style="margin-top:6px;">
+            ✅ Log In to Library
+          </button>
+          <button class="btn btn-outline btn-full btn-sm" onclick="resetForm()" style="margin-top:10px;">
+            ← Change ID
+          </button>
+        </div>
+
+        <div class="form-divider">or</div>
+        <div class="register-link">
+          Not yet registered? <a href="register.html">Register Here →</a>
+        </div>
+
+      </div><!-- /step2 -->
+
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  let currentUser    = null;
+  let activeLogId    = null;
+  let selectedPurpose = null;
+
+  const PURPOSES = [
+    'Study', 'Research', 'Borrow/Return Books',
+    'PC/Internet Usage', 'Meeting', 'Duty/Work',
+    'Official Business', 'Others'
+  ];
+
+  function showToast(msg, type = 'info', duration = 3500) {
+    const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+    const tc = document.getElementById('toast-container');
+    const t  = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+    tc.appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 320); }, duration);
+  }
+
+  function setAlert(msg, type = 'info') {
+    const el = document.getElementById('alertBox');
+    if (!msg) { el.innerHTML = ''; return; }
+    const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+    el.innerHTML = `<div class="alert alert-${type}"><span class="alert-icon">${icons[type]}</span><div>${msg}</div></div>`;
+  }
+
+  function buildPurposeChips() {
+    const c = document.getElementById('purposeChips');
+    c.innerHTML = '';
+    PURPOSES.forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'purpose-chip';
+      d.textContent = p;
+      d.onclick = () => selectPurpose(p, d);
+      c.appendChild(d);
+    });
+  }
+
+  function selectPurpose(purpose, el) {
+    document.querySelectorAll('.purpose-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPurpose = purpose;
+    const og = document.getElementById('othersGroup');
+    og.style.display = purpose === 'Others' ? 'block' : 'none';
+    if (purpose !== 'Others') document.getElementById('specificPurpose').value = '';
+  }
+
+  function setStep(n) {
+    document.getElementById('step1').style.display = n === 1 ? 'block' : 'none';
+    document.getElementById('step2').style.display = n === 2 ? 'block' : 'none';
+    document.getElementById('dot1').className = 'step-dot' + (n >= 1 ? ' active' : '');
+    document.getElementById('dot2').className = 'step-dot' + (n >= 2 ? ' active' : '');
+  }
+
+  async function lookupUser() {
+    const val   = document.getElementById('identifier').value.trim();
+    const errEl = document.getElementById('identifierError');
+    document.getElementById('identifier').classList.remove('error');
+    errEl.classList.remove('show');
+    setAlert('');
+
+    if (!val) {
+      document.getElementById('identifier').classList.add('error');
+      errEl.textContent = 'Please enter your ID or email.';
+      errEl.classList.add('show');
+      return;
+    }
+    const isEmail = val.includes('@');
+    if (isEmail && !validateNEUEmail(val)) {
+      document.getElementById('identifier').classList.add('error');
+      errEl.textContent = 'Email must be @neu.edu.ph domain.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (!isEmail && !validateID(val)) {
+      document.getElementById('identifier').classList.add('error');
+      errEl.textContent = 'Invalid ID format.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    setAlert('Looking up your account…', 'info');
+
+    try {
+      let query = db.from('profiles').select('*').eq('status', 'active');
+      query = isEmail ? query.eq('email', val.toLowerCase()) : query.eq('id', val.toUpperCase());
+      const { data, error } = await query.single();
+
+      if (error || !data) {
+        setAlert('Account not found or inactive. Please <a href="register.html">register first</a>.', 'error');
+        return;
+      }
+
+      currentUser = data;
+      setAlert('');
+
+      const today = new Date().toISOString().split('T')[0];
+      const { data: logs } = await db
+        .from('visitor_logs').select('*')
+        .eq('user_id', data.id).eq('status', 'IN').eq('date', today)
+        .order('time_in', { ascending: false }).limit(1);
+
+      activeLogId = logs && logs.length > 0 ? logs[0].log_id : null;
+
+      const fullName = `${data.first_name}${data.middle_initial ? ' ' + data.middle_initial + '.' : ''} ${data.last_name}`;
+      document.getElementById('userFoundBox').innerHTML =
+        `<span class="alert-icon">👤</span>
+         <div>
+           <strong>${fullName}</strong><br/>
+           <small style="color:var(--blue-mid);">${data.user_type} &nbsp;·&nbsp; ${data.college_dept || '—'}</small>
+         </div>`;
+
+      // Update welcome panel on left side
+      const initials = (data.first_name[0] + (data.last_name[0] || '')).toUpperCase();
+      document.getElementById('welcomeAvatar').textContent  = initials;
+      document.getElementById('welcomeName').textContent    = fullName;
+      document.getElementById('welcomeDept').textContent    = data.college_dept || 'NEU Community';
+      document.getElementById('welcomeProgram').textContent = data.program || data.user_type;
+      document.getElementById('defaultView').style.display  = 'none';
+      document.getElementById('welcomePanel').classList.add('show');
+
+      document.getElementById('alreadyLoggedBox').style.display = activeLogId ? 'block' : 'none';
+      document.getElementById('purposeForm').style.display      = activeLogId ? 'none'  : 'block';
+      buildPurposeChips();
+      setStep(2);
+
+    } catch (e) {
+      setAlert('An error occurred. Please try again.', 'error');
+      console.error(e);
+    }
+  }
+
+  async function doLogin() {
+    if (!selectedPurpose) { showToast('Please select a purpose of visit.', 'warning'); return; }
+    if (selectedPurpose === 'Others' && !document.getElementById('specificPurpose').value.trim()) {
+      showToast('Please specify your purpose.', 'warning'); return;
+    }
+    const now  = new Date();
+    const spec = document.getElementById('specificPurpose').value.trim();
+    try {
+      const { data, error } = await db.from('visitor_logs').insert({
+        user_id: currentUser.id, purpose: selectedPurpose,
+        specific_purpose: spec || null,
+        time_in: now.toISOString(), status: 'IN',
+        date: now.toISOString().split('T')[0]
+      }).select().single();
+      if (error) throw error;
+      activeLogId = data.log_id;
+      showToast(`Welcome, ${currentUser.first_name}! Logged in at ${formatTime(now.toISOString())}`, 'success', 5000);
+      document.getElementById('alreadyInNote').innerHTML =
+        `<div class="already-in-badge">✅ Logged in at ${formatTime(now.toISOString())}</div>`;
+      setStep(1);
+      document.getElementById('identifier').value = '';
+    } catch (e) {
+      showToast('Failed to log in. Please try again.', 'error');
+      console.error(e);
+    }
+  }
+
+  async function doLogout() {
+    if (!activeLogId) { showToast('No active session found.', 'warning'); return; }
+    const now = new Date();
+    try {
+      const { error } = await db.from('visitor_logs')
+        .update({ time_out: now.toISOString(), status: 'OUT' })
+        .eq('log_id', activeLogId);
+      if (error) throw error;
+      document.getElementById('alreadyInNote').innerHTML =
+        `<div class="already-in-badge" style="border-color:rgba(212,175,55,.4);color:var(--gold-light);">
+           👋 Logged out at ${formatTime(now.toISOString())}
+         </div>`;
+      showToast(`Goodbye, ${currentUser.first_name}! Have a great day!`, 'success', 5000);
+      resetForm();
+    } catch (e) {
+      showToast('Failed to log out. Please try again.', 'error');
+      console.error(e);
+    }
+  }
+
+  function resetForm() {
+    currentUser = null; activeLogId = null; selectedPurpose = null;
+    document.getElementById('identifier').value = '';
+    document.getElementById('identifier').classList.remove('error');
+    document.getElementById('identifierError').classList.remove('show');
+    setAlert('');
+    setStep(1);
+    document.getElementById('defaultView').style.display = 'block';
+    document.getElementById('welcomePanel').classList.remove('show');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setStep(1);
+    buildPurposeChips();
+    document.getElementById('identifier').addEventListener('keydown', e => {
+      if (e.key === 'Enter') lookupUser();
+    });
+  });
+</script>
+</body>
+</html>

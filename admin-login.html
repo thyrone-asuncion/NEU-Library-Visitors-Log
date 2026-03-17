@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEU Library — Admin Portal</title>
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/en/4/41/New_Era_University_seal.png" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-login-body {
+      min-height: calc(100vh - 72px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(155deg, var(--blue-dark) 0%, #0d2440 60%, #1a2a40 100%);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .admin-login-body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 50%, rgba(212,175,55,.08), transparent),
+        radial-gradient(ellipse 40% 60% at 80% 30%, rgba(42,95,150,.15), transparent);
+    }
+
+    /* Decorative geometric lines */
+    .admin-login-body::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          45deg,
+          rgba(255,255,255,.015) 0px,
+          rgba(255,255,255,.015) 1px,
+          transparent 1px,
+          transparent 60px
+        );
+    }
+
+    .admin-card {
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .admin-badge {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .admin-badge-icon {
+      width: 76px; height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 32px rgba(212,175,55,.4);
+      border: 3px solid rgba(255,255,255,.15);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 8px 32px rgba(212,175,55,.4); }
+      50%       { box-shadow: 0 8px 48px rgba(212,175,55,.65); }
+    }
+
+    .admin-badge h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .admin-badge p {
+      font-size: 13px;
+      color: rgba(255,255,255,.55);
+    }
+
+    .admin-form-card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 24px 64px rgba(0,0,0,.4);
+    }
+
+    .admin-form-card .form-control {
+      background: rgba(255,255,255,.07);
+      border-color: rgba(255,255,255,.15);
+      color: var(--white);
+    }
+
+    .admin-form-card .form-control::placeholder { color: rgba(255,255,255,.35); }
+
+    .admin-form-card .form-control:focus {
+      background: rgba(255,255,255,.10);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212,175,55,.15);
+    }
+
+    .admin-form-card label {
+      color: rgba(255,255,255,.7) !important;
+    }
+
+    .admin-form-card .field-hint {
+      color: rgba(255,255,255,.4);
+    }
+
+    .admin-form-card .field-error {
+      color: #fca5a5;
+    }
+
+    .pw-wrapper {
+      position: relative;
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0;
+      transition: var(--transition);
+    }
+
+    .pw-toggle:hover { color: var(--gold); }
+
+    .admin-divider {
+      text-align: center;
+      margin: 20px 0;
+      color: rgba(255,255,255,.3);
+      font-size: 12px;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back-link a {
+      color: rgba(255,255,255,.55);
+      font-size: 13px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .back-link a:hover { color: var(--gold); }
+
+    .security-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(212,175,55,.08);
+      border: 1px solid rgba(212,175,55,.20);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 24px;
+      font-size: 11.5px;
+      color: rgba(255,255,255,.55);
+    }
+
+    .security-note .icon { font-size: 16px; color: var(--gold); flex-shrink: 0; }
+
+    #adminAlertBox { margin-bottom: 16px; }
+    #adminAlertBox .alert { background: rgba(220,38,38,.15); border-color: rgba(220,38,38,.35); color: #fca5a5; }
+    #adminAlertBox .alert.alert-info { background: rgba(42,95,150,.2); border-color: rgba(42,95,150,.4); color: rgba(255,255,255,.8); }
+  </style>
+</head>
+<body>
+
+<header class="neu-header">
+  <a href="index.html" class="header-brand">
+    <div class="header-logo">
+      <img src="https://upload.wikimedia.org/wikipedia/en/4/41/New_Era_University_seal.png"
+           alt="NEU Logo"
+           onerror="this.style.display='none'; this.parentElement.textContent='NEU';" />
+    </div>
+    <div class="header-title">
+      <span class="uni-name">New Era University</span>
+      <span class="lib-name">NEU Library</span>
+    </div>
+  </a>
+</header>
+<div class="gold-bar"></div>
+
+<div class="admin-login-body">
+  <div class="admin-card">
+
+    <div class="admin-badge">
+      <div class="admin-badge-icon">🛡️</div>
+      <h1>Admin Portal</h1>
+      <p>Restricted access — authorized personnel only</p>
+    </div>
+
+    <div class="admin-form-card">
+      <div class="security-note">
+        <span class="icon">🔒</span>
+        <span>This area is for Library Administration staff only. Unauthorized access attempts are logged.</span>
+      </div>
+
+      <div id="adminAlertBox"></div>
+
+      <div class="form-group">
+        <label for="adminId">Admin ID or Email <span class="req">*</span></label>
+        <input type="text" id="adminId" class="form-control"
+               placeholder="AX-00001-001 or admin@neu.edu.ph"
+               autocomplete="username" />
+        <div class="field-hint">Format: AX-XXXXX-XXX or institutional email</div>
+        <div class="field-error" id="adminIdError">Invalid Admin ID or email format.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="adminPw">Password <span class="req">*</span></label>
+        <div class="pw-wrapper">
+          <input type="password" id="adminPw" class="form-control"
+                 placeholder="Enter your password"
+                 autocomplete="current-password" />
+          <button class="pw-toggle" onclick="togglePw()" type="button" id="pwEye">👁</button>
+        </div>
+        <div class="field-error" id="adminPwError">Password is required.</div>
+      </div>
+
+      <button class="btn btn-gold btn-full btn-lg" onclick="adminLogin()" id="loginBtn">
+        🔑 Sign In to Dashboard
+      </button>
+
+      <div class="admin-divider">— secure login —</div>
+
+      <div class="back-link">
+        <a href="index.html">← Return to Visitor Login</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  // ── Redirect if already logged in ───────────────────────
+  const adminSession = sessionStorage.getItem('neuAdminUser');
+  if (adminSession) window.location.href = 'admin-dashboard.html';
+
+  function setAlert(msg, type = 'error') {
+    const el = document.getElementById('adminAlertBox');
+    if (!msg) { el.innerHTML = ''; return; }
+    const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+    el.innerHTML = `<div class="alert alert-${type}"><span class="alert-icon">${icons[type]}</span><div>${msg}</div></div>`;
+  }
+
+  function togglePw() {
+    const pw = document.getElementById('adminPw');
+    const eye = document.getElementById('pwEye');
+    if (pw.type === 'password') { pw.type = 'text'; eye.textContent = '🙈'; }
+    else { pw.type = 'password'; eye.textContent = '👁'; }
+  }
+
+  async function adminLogin() {
+    const idVal = document.getElementById('adminId').value.trim();
+    const pw    = document.getElementById('adminPw').value;
+    const btn   = document.getElementById('loginBtn');
+
+    // Clear errors
+    ['adminId', 'adminPw'].forEach(id => {
+      document.getElementById(id).classList.remove('error');
+      document.getElementById(id + 'Error').classList.remove('show');
+    });
+    setAlert('');
+
+    // Validate
+    let ok = true;
+    if (!idVal) {
+      document.getElementById('adminId').classList.add('error');
+      document.getElementById('adminIdError').textContent = 'Admin ID or email is required.';
+      document.getElementById('adminIdError').classList.add('show');
+      ok = false;
+    } else {
+      const isEmail = idVal.includes('@');
+      if (isEmail && !validateNEUEmail(idVal)) {
+        document.getElementById('adminId').classList.add('error');
+        document.getElementById('adminIdError').textContent = 'Must be @neu.edu.ph email.';
+        document.getElementById('adminIdError').classList.add('show');
+        ok = false;
+      } else if (!isEmail && !validateAdminID(idVal)) {
+        document.getElementById('adminId').classList.add('error');
+        document.getElementById('adminIdError').textContent = 'Invalid Admin ID format (AX-XXXXX-XXX).';
+        document.getElementById('adminIdError').classList.add('show');
+        ok = false;
+      }
+    }
+
+    if (!pw) {
+      document.getElementById('adminPw').classList.add('error');
+      document.getElementById('adminPwError').classList.add('show');
+      ok = false;
+    }
+
+    if (!ok) return;
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Signing in…';
+    setAlert('Verifying credentials…', 'info');
+
+    try {
+      const isEmail = idVal.includes('@');
+      let query = db.from('profiles').select('*').eq('role', 'admin').eq('status', 'active');
+      query = isEmail ? query.eq('email', idVal.toLowerCase()) : query.eq('id', idVal.toUpperCase());
+      const { data, error } = await query.single();
+
+      if (error || !data) {
+        setAlert('No admin account found with those credentials.');
+        btn.disabled = false; btn.innerHTML = '🔑 Sign In to Dashboard';
+        return;
+      }
+
+      // NOTE: In production, use Supabase Auth for proper password hashing.
+      // This checks the plain-text 'password' column for demonstration.
+      // Replace with Supabase Auth (signInWithPassword) for real deployment.
+      if (data.password !== pw) {
+        setAlert('Incorrect password. Please try again.');
+        btn.disabled = false; btn.innerHTML = '🔑 Sign In to Dashboard';
+        return;
+      }
+
+      // Store session
+      sessionStorage.setItem('neuAdminUser', JSON.stringify({
+        id: data.id,
+        name: `${data.first_name} ${data.last_name}`,
+        email: data.email,
+        role: 'admin'
+      }));
+
+      setAlert('Login successful! Redirecting…', 'info');
+      setTimeout(() => { window.location.href = 'admin-dashboard.html'; }, 800);
+
+    } catch (e) {
+      setAlert('An error occurred. Please try again.');
+      console.error(e);
+      btn.disabled = false; btn.innerHTML = '🔑 Sign In to Dashboard';
+    }
+  }
+
+  // Enter key
+  document.addEventListener('DOMContentLoaded', () => {
+    ['adminId','adminPw'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') adminLogin();
+      });
+    });
+  });
+</script>
+</body>
+</html>
