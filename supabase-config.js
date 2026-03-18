@@ -3,8 +3,8 @@
 //  Replace SUPABASE_URL and SUPABASE_ANON_KEY with your values
 // ============================================================
 
-const SUPABASE_URL = 'https://npiwaifgypxgjsvyxiec.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_fWBl3L7FmfxZ5kN9Vv4Zmw_3ztw_2N3';
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -186,7 +186,7 @@ function validateID(id) {
 }
 
 function validateAdminID(id) {
-  return /^AX-\d{5}-\d{3}$/i.test(id);
+  return /^A\d+$/i.test(id);  // Format: A001, A002, A010, etc.
 }
 
 function validateNEUEmail(email) {

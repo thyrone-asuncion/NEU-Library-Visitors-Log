@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEU Library — Admin Portal</title>
-  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/en/4/41/New_Era_University_seal.png" />
+  <link rel="icon" href="neu-logo.png" type="image/png" />
   <link rel="stylesheet" href="style.css" />
   <style>
     .admin-login-body {
@@ -192,9 +192,9 @@
 <header class="neu-header">
   <a href="index.html" class="header-brand">
     <div class="header-logo">
-      <img src="https://upload.wikimedia.org/wikipedia/en/4/41/New_Era_University_seal.png"
+      <img src="neu-logo.png"
            alt="NEU Logo"
-           onerror="this.style.display='none'; this.parentElement.textContent='NEU';" />
+           onerror="this.style.display='none'; this.parentElement.insertAdjacentText('beforeend','NEU');" />
     </div>
     <div class="header-title">
       <span class="uni-name">New Era University</span>
@@ -224,9 +224,9 @@
       <div class="form-group">
         <label for="adminId">Admin ID or Email <span class="req">*</span></label>
         <input type="text" id="adminId" class="form-control"
-               placeholder="AX-00001-001 or admin@neu.edu.ph"
+               placeholder="A001 or admin@neu.edu.ph"
                autocomplete="username" />
-        <div class="field-hint">Format: AX-XXXXX-XXX or institutional email</div>
+        <div class="field-hint">Format: A001, A002… or institutional email</div>
         <div class="field-error" id="adminIdError">Invalid Admin ID or email format.</div>
       </div>
 
@@ -304,7 +304,7 @@
         ok = false;
       } else if (!isEmail && !validateAdminID(idVal)) {
         document.getElementById('adminId').classList.add('error');
-        document.getElementById('adminIdError').textContent = 'Invalid Admin ID format (AX-XXXXX-XXX).';
+        document.getElementById('adminIdError').textContent = 'Invalid Admin ID format (e.g. A001).';
         document.getElementById('adminIdError').classList.add('show');
         ok = false;
       }

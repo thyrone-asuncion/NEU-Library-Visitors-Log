@@ -314,8 +314,8 @@
           <div class="form-row">
             <div class="form-group">
               <label for="newAdminId">Admin ID <span class="req">*</span></label>
-              <input type="text" id="newAdminId" class="form-control" placeholder="AX-00001-001" />
-              <div class="field-hint">Format: AX-XXXXX-XXX</div>
+              <input type="text" id="newAdminId" class="form-control" placeholder="e.g. A001" />
+              <div class="field-hint">Format: A001, A002, A010…</div>
             </div>
             <div class="form-group">
               <label for="newAdminEmail">Email <span class="req">*</span></label>
@@ -843,7 +843,7 @@ async function createAdmin() {
   const pw   =document.getElementById('newAdminPw').value;
   const pwc  =document.getElementById('newAdminPwConfirm').value;
   if(!first||!last||!id||!email||!pw||!pwc){setInlineAlert('adminFormAlert','All fields are required.');return;}
-  if(!validateAdminID(id)){setInlineAlert('adminFormAlert','Invalid Admin ID format (AX-XXXXX-XXX).');return;}
+  if(!validateAdminID(id)){setInlineAlert('adminFormAlert','Invalid Admin ID format (e.g. A001).');return;}
   if(!validateNEUEmail(email)){setInlineAlert('adminFormAlert','Must be a valid @neu.edu.ph email.');return;}
   if(pw.length<8){setInlineAlert('adminFormAlert','Password must be at least 8 characters.');return;}
   if(pw!==pwc){setInlineAlert('adminFormAlert','Passwords do not match.');return;}
