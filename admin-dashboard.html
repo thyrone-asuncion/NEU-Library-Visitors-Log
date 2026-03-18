@@ -237,7 +237,11 @@
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <div style="background:var(--blue-pale);border:1px solid #bfdbfe;color:var(--blue-dark);font-size:12px;font-weight:700;padding:4px 12px;border-radius:99px;" id="logCount">0 records</div>
-          <button class="btn btn-sm btn-outline" onclick="exportLogsCSV()">⬇️ Export CSV</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-outline" onclick="exportLogs('csv')" title="Export as CSV">📄 CSV</button>
+            <button class="btn btn-sm btn-outline" onclick="exportLogs('excel')" title="Export as Excel">📊 Excel</button>
+            <button class="btn btn-sm btn-outline" onclick="exportLogs('pdf')" title="Export as PDF">📑 PDF</button>
+          </div>
         </div>
         <div class="table-wrapper">
           <table id="logsTable">
@@ -659,18 +663,231 @@ function renderLogsPage() {
   renderPagination('logsPagination', filteredLogs.length, logPage, LOGS_PER_PAGE, p=>{logPage=p; renderLogsPage();});
 }
 
-function exportLogsCSV() {
-  const headers = ['#','ID','Name','Email','Purpose','Specific Purpose','Time In','Time Out','Dept','Program','Status','Date'];
-  const rows = filteredLogs.map((l,i) => {
-    const p=l.profiles||{};
-    const full=`${p.first_name||''} ${p.middle_initial?p.middle_initial+'. ':''}${p.last_name||''}`;
-    return [i+1,p.id||'',full,p.email||'',l.purpose,l.specific_purpose||'',formatDateTime(l.time_in),formatDateTime(l.time_out),p.college_dept||'',p.program||'',l.status,l.date||''].join(',');
+// ── Export Helpers ───────────────────────────────────────
+function getExportMeta() {
+  const now   = new Date();
+  const phNow = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  const dateStr = phNow.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'2-digit' });
+  const timeStr = phNow.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
+  const stamp   = phNow.toISOString().replace(/[:.]/g,'-').slice(0,19).replace('T','_');
+
+  // Collect active filters
+  const filters = [];
+  const search  = document.getElementById('logSearch').value.trim();
+  const purpose = document.getElementById('logPurpose').value;
+  const dept    = document.getElementById('logDept').value;
+  const status  = document.getElementById('logStatus').value;
+  const from    = document.getElementById('logDateFrom').value;
+  const to      = document.getElementById('logDateTo').value;
+  if (search)  filters.push(`Search: "${search}"`);
+  if (purpose) filters.push(`Purpose: ${purpose}`);
+  if (dept)    filters.push(`Department: ${dept}`);
+  if (status)  filters.push(`Status: ${status}`);
+  if (from)    filters.push(`From: ${from}`);
+  if (to)      filters.push(`To: ${to}`);
+
+  return { dateStr, timeStr, stamp, filters, total: filteredLogs.length };
+}
+
+function getExportRows() {
+  return filteredLogs.map((l, i) => {
+    const p = l.profiles || {};
+    const full = `${p.first_name||''} ${p.middle_initial ? p.middle_initial+'. ' : ''}${p.last_name||''}`.trim();
+    return {
+      num:      i + 1,
+      id:       p.id || '—',
+      name:     full || '—',
+      email:    p.email || '—',
+      purpose:  l.purpose || '—',
+      specific: l.specific_purpose || '',
+      timeIn:   formatDateTime(l.time_in),
+      timeOut:  formatDateTime(l.time_out),
+      dept:     p.college_dept || '—',
+      program:  p.program || p.user_type || '—',
+      status:   l.status,
+      date:     l.date || '—'
+    };
   });
-  const csv=[headers.join(','),...rows].join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`neu_library_logs_${getPHDate()}.csv`; a.click();
+}
+
+function exportLogs(type) {
+  if (type === 'csv')   exportCSV();
+  if (type === 'excel') exportExcel();
+  if (type === 'pdf')   exportPDF();
+}
+
+// ── CSV Export ────────────────────────────────────────────
+function exportCSV() {
+  const { stamp } = getExportMeta();
+  const rows = getExportRows();
+  const headers = ['#','ID','Name','Email','Purpose','Specific Purpose','Time In','Time Out','Department','Program','Status','Date'];
+  const lines = rows.map(r => [
+    r.num, `"${r.id}"`, `"${r.name}"`, `"${r.email}"`,
+    `"${r.purpose}"`, `"${r.specific}"`,
+    `"${r.timeIn}"`, `"${r.timeOut}"`,
+    `"${r.dept}"`, `"${r.program}"`, r.status, r.date
+  ].join(','));
+  const csv = [headers.join(','), ...lines].join('\n');
+  downloadFile(`VisitorLogs_${stamp}.csv`, new Blob([csv], {type:'text/csv'}));
+}
+
+// ── Excel Export ──────────────────────────────────────────
+function exportExcel() {
+  const { dateStr, timeStr, stamp, filters, total } = getExportMeta();
+  const rows = getExportRows();
+
+  // Build HTML table that Excel can open
+  let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+    xmlns:x="urn:schemas-microsoft-com:office:excel"
+    xmlns="http://www.w3.org/TR/REC-html40">
+  <head><meta charset="UTF-8">
+  <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+  <x:ExcelWorksheet><x:Name>Visitor Logs</x:Name>
+  <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+  </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11pt; }
+    .title { font-size: 16pt; font-weight: bold; color: #1a3a5f; }
+    .meta  { font-size: 10pt; color: #666; }
+    .filter-row { font-size: 10pt; color: #333; font-style: italic; }
+    th { background-color: #1a3a5f; color: white; font-weight: bold; padding: 6px 10px; text-align: left; border: 1px solid #ccc; }
+    td { padding: 5px 10px; border: 1px solid #ddd; vertical-align: top; }
+    tr:nth-child(even) td { background-color: #f0f5fc; }
+    .badge-in  { color: #15803d; font-weight: bold; }
+    .badge-out { color: #6b7280; font-weight: bold; }
+  </style></head><body>
+  <p class="title">NEU Library — Visitor Logs</p>
+  <p class="meta">Exported on: ${dateStr} at ${timeStr}</p>
+  <p class="meta">Total Records: ${total}</p>`;
+
+  if (filters.length > 0) {
+    html += `<p class="filter-row">Filters applied: ${filters.join(' | ')}</p>`;
+  }
+
+  html += `<br/>
+  <table border="1" cellspacing="0" cellpadding="5">
+  <thead><tr>
+    <th>#</th><th>ID</th><th>Name</th><th>Email</th>
+    <th>Purpose</th><th>Specific Purpose</th>
+    <th>Time In</th><th>Time Out</th>
+    <th>Department</th><th>Program</th><th>Status</th><th>Date</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(r => {
+    html += `<tr>
+      <td>${r.num}</td><td>${r.id}</td><td>${r.name}</td><td>${r.email}</td>
+      <td>${r.purpose}</td><td>${r.specific||'—'}</td>
+      <td>${r.timeIn}</td><td>${r.timeOut}</td>
+      <td>${r.dept}</td><td>${r.program}</td>
+      <td class="badge-${r.status.toLowerCase()}">${r.status}</td><td>${r.date}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></body></html>`;
+  downloadFile(`VisitorLogs_${stamp}.xls`, new Blob([html], {type:'application/vnd.ms-excel;charset=utf-8'}));
+}
+
+// ── PDF Export ────────────────────────────────────────────
+function exportPDF() {
+  const { dateStr, timeStr, stamp, filters, total } = getExportMeta();
+  const rows = getExportRows();
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head>
+  <meta charset="UTF-8"/>
+  <title>Visitor Logs - NEU Library</title>
+  <style>
+    @page { size: A4 landscape; margin: 15mm 12mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 9pt; color: #222; }
+    .header { display: flex; align-items: center; gap: 14px; border-bottom: 3px solid #1a3a5f; padding-bottom: 10px; margin-bottom: 10px; }
+    .header-logo { width: 52px; height: 52px; }
+    .header-title h1 { font-size: 16pt; color: #1a3a5f; font-weight: bold; margin-bottom: 2px; }
+    .header-title p  { font-size: 9pt; color: #666; }
+    .gold-line { height: 3px; background: linear-gradient(90deg, #a8891f, #d4af37, #e8c84a, #d4af37, #a8891f); margin-bottom: 10px; }
+    .meta-section { display: flex; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+    .meta-box { background: #f0f5fc; border: 1px solid #bfdbfe; border-radius: 6px; padding: 6px 12px; font-size: 8.5pt; }
+    .meta-box strong { color: #1a3a5f; display: block; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+    .filters-bar { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 6px 12px; margin-bottom: 10px; font-size: 8pt; color: #92400e; }
+    .filters-bar strong { font-size: 8pt; }
+    table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+    thead tr { background: #1a3a5f; color: white; }
+    thead th { padding: 6px 7px; text-align: left; font-weight: bold; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; border: 1px solid #0d2440; }
+    tbody tr:nth-child(even) { background: #f0f5fc; }
+    tbody tr:nth-child(odd)  { background: #ffffff; }
+    tbody td { padding: 5px 7px; border: 1px solid #e2e8f0; vertical-align: top; }
+    .badge-in  { color: #15803d; font-weight: bold; }
+    .badge-out { color: #6b7280; font-weight: bold; }
+    .footer { margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 6px; display: flex; justify-content: space-between; font-size: 7.5pt; color: #9ca3af; }
+  </style>
+  </head><body>
+
+  <div class="header">
+    <img class="header-logo" src="neu-logo.png" onerror="this.style.display='none'" />
+    <div class="header-title">
+      <h1>NEU Library — Visitor Logs</h1>
+      <p>New Era University · Library Services</p>
+    </div>
+  </div>
+  <div class="gold-line"></div>
+
+  <div class="meta-section">
+    <div class="meta-box"><strong>Exported On</strong>${dateStr} at ${timeStr}</div>
+    <div class="meta-box"><strong>Total Records</strong>${total} record${total !== 1 ? 's' : ''}</div>
+    <div class="meta-box"><strong>Generated By</strong>${adminUser.name || 'Library Admin'}</div>
+  </div>
+
+  ${filters.length > 0 ? `<div class="filters-bar"><strong>🔍 Filters Applied:</strong> ${filters.join(' &nbsp;|&nbsp; ')}</div>` : ''}
+
+  <table>
+    <thead><tr>
+      <th style="width:30px">#</th>
+      <th style="width:90px">ID</th>
+      <th style="width:120px">Name</th>
+      <th style="width:140px">Email</th>
+      <th style="width:80px">Purpose</th>
+      <th style="width:90px">Specific</th>
+      <th style="width:110px">Time In</th>
+      <th style="width:110px">Time Out</th>
+      <th style="width:130px">Department</th>
+      <th style="width:100px">Program</th>
+      <th style="width:40px">Status</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map(r => `<tr>
+      <td>${r.num}</td>
+      <td>${r.id}</td>
+      <td>${r.name}</td>
+      <td style="font-size:7.5pt;">${r.email}</td>
+      <td>${r.purpose}</td>
+      <td style="font-size:7.5pt;color:#666;">${r.specific||'—'}</td>
+      <td style="white-space:nowrap;font-size:7.5pt;">${r.timeIn}</td>
+      <td style="white-space:nowrap;font-size:7.5pt;">${r.timeOut}</td>
+      <td style="font-size:7.5pt;">${r.dept}</td>
+      <td style="font-size:7.5pt;">${r.program}</td>
+      <td class="badge-${r.status.toLowerCase()}">${r.status}</td>
+    </tr>`).join('')}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>NEU Library Visitor Log System</span>
+    <span>Exported: ${dateStr} ${timeStr}</span>
+    <span>Total: ${total} records</span>
+  </div>
+
+  <script>window.onload = () => { window.print(); }</script>
+  </body></html>`);
+  win.document.close();
+  // Suggest filename via title (browser uses tab title as PDF name)
+  win.document.title = `VisitorLogs_${stamp}`;
+}
+
+// ── Generic file download ─────────────────────────────────
+function downloadFile(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
 
