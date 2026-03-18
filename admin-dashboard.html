@@ -530,7 +530,7 @@ function buildPeakChart(logs) {
 }
 
 const RANK_COLORS = ['gold','silver','bronze','plain','plain'];
-function rankNum(i) { return ['🥇','🥈','🥉'][i] || (i+1); }
+function rankNum(i) { return ['1st','2nd','3rd','4th','5th'][i] || (i+1); }
 
 async function loadRankings() {
   // Step 1: Get only Student profiles
@@ -1020,7 +1020,7 @@ function exportRankingsPDF(type) {
         startY: y,
         head: [['Rank', 'Student Name', 'College / Department', 'Total Visits']],
         body: data.map(r => [
-          r.rank === 1 ? '🥇 1st' : r.rank === 2 ? '🥈 2nd' : r.rank === 3 ? '🥉 3rd' : r.rank + 'th',
+          r.rank === 1 ? '1st' : r.rank === 2 ? '2nd' : r.rank === 3 ? '3rd' : r.rank === 4 ? '4th' : '5th',
           r.name,
           r.college,
           r.visits + ' visit' + (r.visits !== 1 ? 's' : '')
@@ -1055,7 +1055,7 @@ function exportRankingsPDF(type) {
         startY: y,
         head: [['Rank', 'College / Department', 'Total Visits']],
         body: data.map(r => [
-          r.rank === 1 ? '🥇 1st' : r.rank === 2 ? '🥈 2nd' : r.rank === 3 ? '🥉 3rd' : r.rank + 'th',
+          r.rank === 1 ? '1st' : r.rank === 2 ? '2nd' : r.rank === 3 ? '3rd' : r.rank === 4 ? '4th' : '5th',
           r.college,
           r.visits + ' visit' + (r.visits !== 1 ? 's' : '')
         ]),
