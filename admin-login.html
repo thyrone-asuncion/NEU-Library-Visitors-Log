@@ -324,19 +324,27 @@
 
     try {
       const isEmail = idVal.includes('@');
+      // Use maybeSingle() instead of single() to avoid errors when no rows found
       let query = db.from('profiles').select('*').eq('role', 'admin').eq('status', 'active');
       query = isEmail ? query.eq('email', idVal.toLowerCase()) : query.eq('id', idVal.toUpperCase());
-      const { data, error } = await query.single();
+      const { data, error } = await query.maybeSingle();
 
-      if (error || !data) {
-        setAlert('No admin account found with those credentials.');
+      console.log('Login query result:', { data, error, idVal });
+
+      if (error) {
+        setAlert('Database error: ' + error.message);
         btn.disabled = false; btn.innerHTML = '🔑 Sign In to Dashboard';
         return;
       }
 
-      // NOTE: In production, use Supabase Auth for proper password hashing.
-      // This checks the plain-text 'password' column for demonstration.
-      // Replace with Supabase Auth (signInWithPassword) for real deployment.
+      if (!data) {
+        setAlert('No admin account found. Check your ID/email.');
+        btn.disabled = false; btn.innerHTML = '🔑 Sign In to Dashboard';
+        return;
+      }
+
+      console.log('Admin found, checking password. DB password:', data.password, 'Entered:', pw);
+
       if (data.password !== pw) {
         setAlert('Incorrect password. Please try again.');
         btn.disabled = false; btn.innerHTML = '🔑 Sign In to Dashboard';
