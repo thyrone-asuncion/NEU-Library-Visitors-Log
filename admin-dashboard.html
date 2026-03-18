@@ -112,6 +112,23 @@
     <div class="dash-datetime" id="dashDatetime">—</div>
   </div>
   <div class="dash-header-right">
+    <button onclick="manualRefresh()" id="syncBtn" title="Sync data manually" style="
+      background:rgba(255,255,255,.10);
+      border:1.5px solid rgba(255,255,255,.25);
+      color:rgba(255,255,255,.85);
+      padding:7px 14px;
+      border-radius:var(--radius-sm);
+      font-family:'Montserrat',sans-serif;
+      font-size:12px;
+      font-weight:600;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      transition:var(--transition);
+    " onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.10)'">
+      🔄 <span>Sync</span>
+    </button>
     <div class="dash-welcome" id="dashWelcome">Welcome, Admin</div>
   </div>
 </div>
@@ -1509,8 +1526,23 @@ function renderPagination(containerId, total, current, perPage, onPageChange) {
 
 // ── Refresh ───────────────────────────────────────────────
 async function refreshAll(silent=false) {
-  if(!silent) showToast('Refreshing data…','info',1800);
   await Promise.all([loadStats(), loadLogs()]);
+}
+
+async function manualRefresh() {
+  const btn  = document.getElementById('syncBtn');
+  const span = btn.querySelector('span');
+  btn.disabled = true;
+  span.textContent = 'Syncing…';
+  await Promise.all([
+    loadStats(),
+    loadLogs(),
+    activeTab === 'users'  ? loadUsers()  : Promise.resolve(),
+    activeTab === 'admins' ? loadAdmins() : Promise.resolve()
+  ]);
+  showToast('Data synced successfully!', 'success', 2000);
+  btn.disabled = false;
+  span.textContent = 'Sync';
 }
 
 // ── Visitor check-in popup ────────────────────────────────
@@ -1593,13 +1625,8 @@ function switchTab(name) {
   if (name==='admins') loadAdmins();
 }
 
-// ── Polling fallback every 10 seconds ────────────────────
-setInterval(() => {
-  refreshAll(true);
-  // Also refresh whichever management tab is open
-  if (activeTab === 'users')  loadUsers();
-  if (activeTab === 'admins') loadAdmins();
-}, 10000);
+// ── No auto-polling — realtime handles live updates ──────
+// Use the Sync button in the header to manually refresh
 
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async()=>{
