@@ -289,8 +289,13 @@
             <button class="btn btn-outline btn-sm" onclick="clearUserFilters()">✕ Clear</button>
           </div>
         </div>
-        <div style="margin-bottom:12px;">
-          <div style="background:var(--blue-pale);border:1px solid #bfdbfe;color:var(--blue-dark);font-size:12px;font-weight:700;padding:4px 12px;border-radius:99px;display:inline-block;" id="userCount">0 records</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div style="background:var(--blue-pale);border:1px solid #bfdbfe;color:var(--blue-dark);font-size:12px;font-weight:700;padding:4px 12px;border-radius:99px;" id="userCount">0 records</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-outline" onclick="exportUsers('csv')" title="Export as CSV">📄 CSV</button>
+            <button class="btn btn-sm btn-outline" onclick="exportUsers('excel')" title="Export as Excel">📊 Excel</button>
+            <button class="btn btn-sm btn-outline" onclick="exportUsers('pdf')" title="Export as PDF">📑 PDF</button>
+          </div>
         </div>
         <div class="table-wrapper">
           <table id="usersTable">
@@ -932,6 +937,154 @@ function downloadFile(filename, blob) {
   const a   = document.createElement('a');
   a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── User Management Export ────────────────────────────────
+function getUserExportMeta() {
+  const now   = new Date();
+  const phNow = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  const dateStr = phNow.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'2-digit' });
+  const timeStr = phNow.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
+  const stamp   = phNow.toISOString().replace(/[:.]/g,'-').slice(0,19).replace('T','_');
+
+  const filters = [];
+  const search  = document.getElementById('userSearch').value.trim();
+  const type    = document.getElementById('userType').value;
+  const dept    = document.getElementById('userDept').value;
+  const program = document.getElementById('userProgram').value;
+  const status  = document.getElementById('userStatus').value;
+  if (search)  filters.push('Search: "' + search + '"');
+  if (type)    filters.push('Type: ' + type);
+  if (dept)    filters.push('Department: ' + dept);
+  if (program) filters.push('Program: ' + program);
+  if (status)  filters.push('Status: ' + status);
+
+  return { dateStr, timeStr, stamp, filters, total: filteredUsers.length };
+}
+
+function getUserExportRows() {
+  return filteredUsers.map((u, i) => {
+    const full = (u.first_name||'') + (u.middle_initial ? ' ' + u.middle_initial + '.' : '') + ' ' + (u.last_name||'');
+    return {
+      num:     i + 1,
+      id:      u.id || '—',
+      name:    full.trim() || '—',
+      email:   u.email || '—',
+      type:    u.user_type || '—',
+      dept:    u.college_dept || '—',
+      program: u.program || '—',
+      status:  u.status || '—',
+      created: formatDate(u.created_at)
+    };
+  });
+}
+
+function exportUsers(type) {
+  if (type === 'csv')   exportUsersCSV();
+  if (type === 'excel') exportUsersExcel();
+  if (type === 'pdf')   exportUsersPDF();
+}
+
+function exportUsersCSV() {
+  const { stamp } = getUserExportMeta();
+  const rows = getUserExportRows();
+  const headers = ['#','ID','Name','Email','Type','Department','Program','Status','Registered'];
+  const lines = rows.map(r => [
+    r.num, '"'+r.id+'"', '"'+r.name+'"', '"'+r.email+'"',
+    r.type, '"'+r.dept+'"', '"'+r.program+'"', r.status, r.created
+  ].join(','));
+  const csv = [headers.join(','), ...lines].join('\n');
+  downloadFile('UserList_' + stamp + '.csv', new Blob([csv], {type:'text/csv'}));
+}
+
+function exportUsersExcel() {
+  const { dateStr, timeStr, stamp, filters, total } = getUserExportMeta();
+  const rows = getUserExportRows();
+  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>body{font-family:Arial;font-size:11pt}.title{font-size:16pt;font-weight:bold;color:#1a3a5f}.meta{font-size:10pt;color:#666}th{background:#1a3a5f;color:white;padding:6px 10px;border:1px solid #ccc}td{padding:5px 10px;border:1px solid #ddd}tr:nth-child(even)td{background:#f0f5fc}.active{color:#15803d;font-weight:bold}.blocked{color:#dc2626;font-weight:bold}</style></head><body>';
+  html += '<p class="title">NEU Library — User List</p>';
+  html += '<p class="meta">Exported on: ' + dateStr + ' at ' + timeStr + '</p>';
+  html += '<p class="meta">Total Records: ' + total + '</p>';
+  if (filters.length > 0) html += '<p class="meta"><i>Filters: ' + filters.join(' | ') + '</i></p>';
+  html += '<br/><table border="1" cellspacing="0"><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Email</th><th>Type</th><th>Department</th><th>Program</th><th>Status</th><th>Registered</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr><td>'+r.num+'</td><td>'+r.id+'</td><td>'+r.name+'</td><td>'+r.email+'</td><td>'+r.type+'</td><td>'+r.dept+'</td><td>'+r.program+'</td><td class="'+r.status+'">'+r.status+'</td><td>'+r.created+'</td></tr>';
+  });
+  html += '</tbody></table></body></html>';
+  downloadFile('UserList_' + stamp + '.xls', new Blob([html], {type:'application/vnd.ms-excel;charset=utf-8'}));
+}
+
+function exportUsersPDF() {
+  const { dateStr, timeStr, stamp, filters, total } = getUserExportMeta();
+  const rows = getUserExportRows();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  let y = 14;
+
+  // Header
+  doc.setFillColor(26, 58, 95);
+  doc.rect(0, 0, pageW, 20, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(255, 255, 255);
+  doc.text('NEU Library — User List', 14, 13);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(200, 220, 255);
+  doc.text('New Era University · Library Services', pageW - 14, 13, { align: 'right' });
+
+  // Gold line
+  doc.setDrawColor(212, 175, 55);
+  doc.setLineWidth(1.2);
+  doc.line(0, 20, pageW, 20);
+  y = 28;
+
+  // Meta
+  doc.setFontSize(8); doc.setTextColor(26, 58, 95); doc.setFont('helvetica', 'bold');
+  doc.text('EXPORTED ON', 14, y);
+  doc.text('TOTAL RECORDS', 90, y);
+  doc.text('GENERATED BY', 166, y);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(50, 50, 50); doc.setFontSize(9);
+  doc.text(dateStr + ' at ' + timeStr, 14, y + 5);
+  doc.text(String(total) + ' record' + (total !== 1 ? 's' : ''), 90, y + 5);
+  doc.text(adminUser.name || 'Library Admin', 166, y + 5);
+  y += 13;
+
+  // Filters
+  if (filters.length > 0) {
+    doc.setFillColor(255, 251, 235); doc.setDrawColor(252, 211, 77);
+    doc.roundedRect(14, y, pageW - 28, 8, 2, 2, 'FD');
+    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(146, 64, 14);
+    doc.text('Filters: ', 17, y + 5.2);
+    doc.setFont('helvetica', 'normal');
+    doc.text(filters.join('  |  '), 30, y + 5.2, { maxWidth: pageW - 46 });
+    y += 12;
+  }
+
+  // Table
+  doc.autoTable({
+    startY: y,
+    head: [['#','ID','Name','Email','Type','Department','Program','Status','Registered']],
+    body: rows.map(r => [r.num, r.id, r.name, r.email, r.type, r.dept, r.program, r.status, r.created]),
+    styles: { fontSize: 7, cellPadding: 2.5, overflow: 'linebreak', valign: 'top' },
+    headStyles: { fillColor: [26, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+    alternateRowStyles: { fillColor: [240, 245, 252] },
+    columnStyles: {
+      0:{cellWidth:8}, 1:{cellWidth:25}, 2:{cellWidth:32}, 3:{cellWidth:45},
+      4:{cellWidth:18}, 5:{cellWidth:40}, 6:{cellWidth:35}, 7:{cellWidth:16}, 8:{cellWidth:22}
+    },
+    margin: { left: 14, right: 14 },
+    didDrawPage: (data) => {
+      const pageCount = doc.internal.getNumberOfPages();
+      const pageNum   = doc.internal.getCurrentPageInfo().pageNumber;
+      doc.setFontSize(7); doc.setTextColor(156,163,175); doc.setFont('helvetica','normal');
+      doc.text('NEU Library User List', 14, doc.internal.pageSize.getHeight()-6);
+      doc.text('Exported: '+dateStr+' '+timeStr, pageW/2, doc.internal.pageSize.getHeight()-6, {align:'center'});
+      doc.text('Page '+pageNum+' of '+pageCount, pageW-14, doc.internal.pageSize.getHeight()-6, {align:'right'});
+    }
+  });
+
+  doc.save('UserList_' + stamp + '.pdf');
 }
 
 // ── Users Table ───────────────────────────────────────────
