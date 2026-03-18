@@ -377,8 +377,11 @@
             <div class="id-label">Your Library ID</div>
             <span class="id-val" id="successId">—</span>
           </div>
+          <p style="font-size:13px;color:var(--gray-400);margin-bottom:16px;">
+            Redirecting in <strong id="countdownNum" style="color:var(--blue-dark);font-size:18px;">5</strong> seconds…
+          </p>
           <a href="index.html" class="btn btn-primary btn-lg btn-full">
-            🏛️ Proceed to Library Login
+            🏛️ Proceed to Library Login Now
           </a>
         </div>
       </div>
@@ -752,7 +755,14 @@
       updateProgress(4);
       setAlert('');
       showToast('Registration successful! Redirecting in 5 seconds…', 'success', 5000);
-      setTimeout(() => { window.location.href = 'index.html'; }, 5000);
+      // Live countdown
+      let secs = 5;
+      const countEl = document.getElementById('countdownNum');
+      const countInterval = setInterval(() => {
+        secs--;
+        if (countEl) countEl.textContent = secs;
+        if (secs <= 0) { clearInterval(countInterval); window.location.href = 'index.html'; }
+      }, 1000);
 
     } catch (e) {
       setAlert('Registration failed. Please try again.', 'error');

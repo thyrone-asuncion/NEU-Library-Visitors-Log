@@ -1,1 +1,0 @@
-<h1>NEU Library Log</h1>
