@@ -324,12 +324,10 @@
 
     try {
       const isEmail = idVal.includes('@');
-      // Use maybeSingle() instead of single() to avoid errors when no rows found
-      let query = db.from('profiles').select('*').eq('role', 'admin').eq('status', 'active');
+      // Query the dedicated admins table
+      let query = db.from('admins').select('*').eq('status', 'active');
       query = isEmail ? query.eq('email', idVal.toLowerCase()) : query.eq('id', idVal.toUpperCase());
       const { data, error } = await query.maybeSingle();
-
-      console.log('Login query result:', { data, error, idVal });
 
       if (error) {
         setAlert('Database error: ' + error.message);
@@ -342,8 +340,6 @@
         btn.disabled = false; btn.innerHTML = '🔑 Sign In to Dashboard';
         return;
       }
-
-      console.log('Admin found, checking password. DB password:', data.password, 'Entered:', pw);
 
       if (data.password !== pw) {
         setAlert('Incorrect password. Please try again.');

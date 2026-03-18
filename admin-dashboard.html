@@ -678,7 +678,7 @@ function exportLogsCSV() {
 let allUsers=[], filteredUsers=[], userPage=1;
 
 async function loadUsers() {
-  const { data, error } = await db.from('profiles').select('*').neq('role','admin').order('created_at',{ascending:false});
+  const { data, error } = await db.from('profiles').select('*').order('created_at',{ascending:false});
   if (error) { showToast('Failed to load users.','error'); return; }
   allUsers = data||[];
 
@@ -811,7 +811,7 @@ async function deleteUser(id) {
 let allAdmins=[], adminPage=1, changePwAdminId=null;
 
 async function loadAdmins() {
-  const{data,error}=await db.from('profiles').select('*').eq('role','admin').order('created_at',{ascending:false});
+  const{data,error}=await db.from('admins').select('*').order('created_at',{ascending:false});
   if(error){showToast('Failed to load admins.','error');return;}
   allAdmins=data||[];
   document.getElementById('adminCount').textContent=`${allAdmins.length} admins`;
@@ -866,7 +866,7 @@ async function createAdmin() {
   if(pw.length<8){setInlineAlert('adminFormAlert','Password must be at least 8 characters.');return;}
   if(pw!==pwc){setInlineAlert('adminFormAlert','Passwords do not match.');return;}
   setInlineAlert('adminFormAlert','Creating admin account…','info');
-  const{error}=await db.from('profiles').insert({id,first_name:first,last_name:last,email,password:pw,role:'admin',status:'active',user_type:'Employee',created_at:new Date().toISOString()});
+  const{error}=await db.from('admins').insert({id,first_name:first,last_name:last,email,password:pw,status:'active',created_at:new Date().toISOString()});
   if(error){setInlineAlert('adminFormAlert',error.message.includes('duplicate')?'ID or email already exists.':'Failed to create admin.');return;}
   setInlineAlert('adminFormAlert','');
   showToast('Admin account created successfully!','success');
@@ -876,7 +876,7 @@ async function createAdmin() {
 
 async function deleteAdmin(id) {
   if(!confirm('Delete this admin account? This cannot be undone.')) return;
-  const{error}=await db.from('profiles').delete().eq('id',id).eq('role','admin');
+  const{error}=await db.from('admins').delete().eq('id',id);
   if(error){showToast('Failed to delete admin.','error');return;}
   showToast('Admin deleted.','success');
   loadAdmins();
@@ -897,7 +897,7 @@ async function saveNewPassword() {
   const pwc=document.getElementById('confirmPw').value;
   if(pw.length<8){setInlineAlert('pwModalAlert','Password must be at least 8 characters.');return;}
   if(pw!==pwc){setInlineAlert('pwModalAlert','Passwords do not match.');return;}
-  const{error}=await db.from('profiles').update({password:pw}).eq('id',changePwAdminId);
+  const{error}=await db.from('admins').update({password:pw}).eq('id',changePwAdminId);
   if(error){setInlineAlert('pwModalAlert','Failed to update password.');return;}
   showToast('Password changed successfully!','success');
   closePwModal();
@@ -964,31 +964,35 @@ function setupRealtime() {
     })
     .subscribe((status)=>{ console.log('visitor_logs realtime:', status); });
 
-  // Channel 2: profiles changes (new registrations + new admins)
+  // Channel 2: profiles changes (new user registrations)
   db.channel('profiles_realtime')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'profiles'}, (payload)=>{
       const p = payload.new;
-      if (p.role === 'admin') {
-        // New admin created
-        showToast(`🛡️ New admin added: ${p.first_name} ${p.last_name}`, 'info', 5000);
-        if (activeTab === 'admins') loadAdmins();
-      } else {
-        // New regular user registered
-        showToast(`🆕 New user registered: ${p.first_name} ${p.last_name} (${p.user_type})`, 'info', 5000);
-        if (activeTab === 'users') loadUsers();
-      }
+      showToast(`🆕 New user registered: ${p.first_name} ${p.last_name} (${p.user_type})`, 'info', 5000);
+      if (activeTab === 'users') loadUsers();
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles'}, ()=>{
-      // User blocked/activated or password changed
-      if (activeTab === 'users')  loadUsers();
-      if (activeTab === 'admins') loadAdmins();
+      if (activeTab === 'users') loadUsers();
     })
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'profiles'}, ()=>{
-      // User or admin deleted
-      if (activeTab === 'users')  loadUsers();
-      if (activeTab === 'admins') loadAdmins();
+      if (activeTab === 'users') loadUsers();
     })
     .subscribe((status)=>{ console.log('profiles realtime:', status); });
+
+  // Channel 3: admins table changes
+  db.channel('admins_realtime')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'admins'}, (payload)=>{
+      const a = payload.new;
+      showToast(`🛡️ New admin added: ${a.first_name} ${a.last_name}`, 'info', 5000);
+      if (activeTab === 'admins') loadAdmins();
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'admins'}, ()=>{
+      if (activeTab === 'admins') loadAdmins();
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'admins'}, ()=>{
+      if (activeTab === 'admins') loadAdmins();
+    })
+    .subscribe((status)=>{ console.log('admins realtime:', status); });
 }
 
 // ── Override switchTab to track active tab ────────────────
