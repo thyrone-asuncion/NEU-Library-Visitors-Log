@@ -570,18 +570,36 @@ let allLogs=[], filteredLogs=[], logPage=1;
 const LOGS_PER_PAGE = 10;
 
 async function loadLogs() {
-  const { data, error } = await db
-    .from('visitor_logs')
-    .select(`log_id, purpose, specific_purpose, time_in, time_out, status, date,
-             profiles:user_id (id, first_name, middle_initial, last_name, email, user_type, college_dept, program)`)
-    .order('time_in', { ascending: false });
-  if (error) { showToast('Failed to load logs.','error'); return; }
-  allLogs = data || [];
-  const depts = [...new Set(allLogs.map(l=>l.profiles?.college_dept).filter(Boolean))].sort();
-  const deptSel = document.getElementById('logDept');
-  const existing = Array.from(deptSel.options).map(o=>o.value);
-  depts.forEach(d => { if(!existing.includes(d)){ const o=document.createElement('option'); o.value=d; o.textContent=d; deptSel.appendChild(o); }});
-  filterLogs();
+  try {
+    // Fetch logs and profiles separately to avoid join timeout issues
+    const [logsRes, profilesRes] = await Promise.all([
+      db.from('visitor_logs').select('*').order('time_in', { ascending: false }),
+      db.from('profiles').select('id, first_name, middle_initial, last_name, email, user_type, college_dept, program')
+    ]);
+
+    if (logsRes.error) throw logsRes.error;
+
+    // Build a profile lookup map
+    const profileMap = {};
+    (profilesRes.data || []).forEach(p => { profileMap[p.id] = p; });
+
+    // Attach profiles to logs
+    allLogs = (logsRes.data || []).map(l => ({
+      ...l,
+      profiles: profileMap[l.user_id] || null
+    }));
+
+    const depts = [...new Set(allLogs.map(l=>l.profiles?.college_dept).filter(Boolean))].sort();
+    const deptSel = document.getElementById('logDept');
+    const existing = Array.from(deptSel.options).map(o=>o.value);
+    depts.forEach(d => { if(!existing.includes(d)){ const o=document.createElement('option'); o.value=d; o.textContent=d; deptSel.appendChild(o); }});
+    filterLogs();
+
+  } catch(e) {
+    console.error('loadLogs error:', e);
+    showToast('Failed to load logs. Retrying…','error', 3000);
+    setTimeout(loadLogs, 3000); // Auto-retry after 3 seconds
+  }
 }
 
 function filterLogs() {
