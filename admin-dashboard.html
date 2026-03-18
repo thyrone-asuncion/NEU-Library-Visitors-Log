@@ -257,9 +257,21 @@
           </div>
           <div class="filter-group">
             <label>Type</label>
-            <select class="filter-control" id="userType" onchange="filterUsers()">
+            <select class="filter-control" id="userType" onchange="onUserTypeFilter()">
               <option value="">All Types</option>
               <option>Student</option><option>Faculty</option><option>Employee</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Department</label>
+            <select class="filter-control" id="userDept" onchange="filterUsers()">
+              <option value="">All Departments</option>
+            </select>
+          </div>
+          <div class="filter-group" id="userProgramGroup" style="display:none;">
+            <label>Program</label>
+            <select class="filter-control" id="userProgram" onchange="filterUsers()">
+              <option value="">All Programs</option>
             </select>
           </div>
           <div class="filter-group">
@@ -267,6 +279,10 @@
             <select class="filter-control" id="userStatus" onchange="filterUsers()">
               <option value="">All</option><option>active</option><option>blocked</option>
             </select>
+          </div>
+          <div class="filter-group" style="min-width:auto;">
+            <label>&nbsp;</label>
+            <button class="btn btn-outline btn-sm" onclick="clearUserFilters()">✕ Clear</button>
           </div>
         </div>
         <div style="margin-bottom:12px;">
@@ -647,18 +663,77 @@ async function loadUsers() {
   const { data, error } = await db.from('profiles').select('*').neq('role','admin').order('created_at',{ascending:false});
   if (error) { showToast('Failed to load users.','error'); return; }
   allUsers = data||[];
+
+  // Populate dept dropdown with all available departments
+  const deptSel = document.getElementById('userDept');
+  const currentDept = deptSel.value;
+  deptSel.innerHTML = '<option value="">All Departments</option>';
+  const depts = [...new Set(allUsers.map(u => u.college_dept).filter(Boolean))].sort();
+  depts.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d; deptSel.appendChild(o);
+  });
+  deptSel.value = currentDept;
+
+  filterUsers();
+}
+
+function onUserTypeFilter() {
+  const type = document.getElementById('userType').value;
+  const deptSel = document.getElementById('userDept');
+  const progGroup = document.getElementById('userProgramGroup');
+  const progSel = document.getElementById('userProgram');
+
+  // Rebuild dept dropdown based on selected type
+  deptSel.innerHTML = '<option value="">All Departments</option>';
+  const depts = [...new Set(allUsers
+    .filter(u => !type || u.user_type === type)
+    .map(u => u.college_dept).filter(Boolean))].sort();
+  depts.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d; deptSel.appendChild(o);
+  });
+
+  // Show program filter only for Students
+  if (type === 'Student') {
+    progGroup.style.display = 'flex';
+    progSel.innerHTML = '<option value="">All Programs</option>';
+    const progs = [...new Set(allUsers
+      .filter(u => u.user_type === 'Student')
+      .map(u => u.program).filter(Boolean))].sort();
+    progs.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p; o.textContent = p; progSel.appendChild(o);
+    });
+  } else {
+    progGroup.style.display = 'none';
+    progSel.value = '';
+  }
+
+  filterUsers();
+}
+
+function clearUserFilters() {
+  ['userSearch'].forEach(id => document.getElementById(id).value = '');
+  ['userType','userDept','userProgram','userStatus'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('userProgramGroup').style.display = 'none';
   filterUsers();
 }
 
 function filterUsers() {
-  const search = document.getElementById('userSearch').value.toLowerCase();
-  const type   = document.getElementById('userType').value;
-  const status = document.getElementById('userStatus').value;
+  const search  = document.getElementById('userSearch').value.toLowerCase();
+  const type    = document.getElementById('userType').value;
+  const dept    = document.getElementById('userDept').value;
+  const program = document.getElementById('userProgram').value;
+  const status  = document.getElementById('userStatus').value;
+
   filteredUsers = allUsers.filter(u => {
     const full=`${u.first_name||''} ${u.last_name||''} ${u.id||''} ${u.email||''}`.toLowerCase();
-    if(search && !full.includes(search)) return false;
-    if(type   && u.user_type!==type)     return false;
-    if(status && u.status!==status)      return false;
+    if(search  && !full.includes(search))      return false;
+    if(type    && u.user_type !== type)         return false;
+    if(dept    && u.college_dept !== dept)      return false;
+    if(program && u.program !== program)        return false;
+    if(status  && u.status !== status)          return false;
     return true;
   });
   userPage=1;

@@ -754,23 +754,15 @@
       }
       updateProgress(4);
       setAlert('');
-      // Create a persistent countdown toast that updates every second
+      // Simple success toast — no countdown in popup
+      showToast('Registration successful! 🎉', 'success', 5000);
+
+      // Countdown only on the page (not in toast)
       let secs = 5;
       const countEl = document.getElementById('countdownNum');
-      const tc = document.getElementById('toast-container');
-      const toastEl = document.createElement('div');
-      toastEl.className = 'toast success';
-      toastEl.innerHTML = '<span>✅</span><span id="toastCountMsg">Registration successful! Redirecting in <strong>5</strong>...</span>';
-      tc.appendChild(toastEl);
-
       const countInterval = setInterval(() => {
         secs--;
-        // Update both the page number and the toast number
         if (countEl) countEl.textContent = secs;
-        const toastMsg = document.getElementById('toastCountMsg');
-        if (toastMsg) toastMsg.innerHTML = secs > 0
-          ? 'Registration successful! Redirecting in <strong>' + secs + '</strong>...'
-          : 'Redirecting now... 🚀';
         if (secs <= 0) {
           clearInterval(countInterval);
           window.location.href = 'index.html';
