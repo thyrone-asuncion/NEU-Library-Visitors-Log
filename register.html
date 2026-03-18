@@ -754,14 +754,27 @@
       }
       updateProgress(4);
       setAlert('');
-      showToast('Registration successful! Redirecting in 5 seconds…', 'success', 5000);
-      // Live countdown
+      // Create a persistent countdown toast that updates every second
       let secs = 5;
       const countEl = document.getElementById('countdownNum');
+      const tc = document.getElementById('toast-container');
+      const toastEl = document.createElement('div');
+      toastEl.className = 'toast success';
+      toastEl.innerHTML = '<span>✅</span><span id="toastCountMsg">Registration successful! Redirecting in <strong>5</strong>...</span>';
+      tc.appendChild(toastEl);
+
       const countInterval = setInterval(() => {
         secs--;
+        // Update both the page number and the toast number
         if (countEl) countEl.textContent = secs;
-        if (secs <= 0) { clearInterval(countInterval); window.location.href = 'index.html'; }
+        const toastMsg = document.getElementById('toastCountMsg');
+        if (toastMsg) toastMsg.innerHTML = secs > 0
+          ? 'Registration successful! Redirecting in <strong>' + secs + '</strong>...'
+          : 'Redirecting now... 🚀';
+        if (secs <= 0) {
+          clearInterval(countInterval);
+          window.location.href = 'index.html';
+        }
       }, 1000);
 
     } catch (e) {
