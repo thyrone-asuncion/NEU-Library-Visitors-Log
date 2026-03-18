@@ -415,14 +415,7 @@ function setInlineAlert(id, msg, type='error') {
 }
 
 // ── Tabs ─────────────────────────────────────────────────
-function switchTab(name) {
-  ['logs','users','admins'].forEach(t => {
-    document.getElementById('panel'+cap(t)).classList.toggle('active', t===name);
-    document.getElementById('tab'+cap(t)).classList.toggle('active', t===name);
-  });
-  if (name==='users')  loadUsers();
-  if (name==='admins') loadAdmins();
-}
+// switchTab is defined below in setupRealtime section
 function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
 
 // ── Stats ────────────────────────────────────────────────
@@ -857,8 +850,13 @@ function showVisitorAlert(name, dept, purpose) {
   setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),320);},6000);
 }
 
+// ── Track which tab is active ────────────────────────────
+let activeTab = 'logs';
+const origSwitchTab = switchTab;
+
 // ── Supabase Realtime ─────────────────────────────────────
 function setupRealtime() {
+  // Channel 1: visitor_logs changes
   db.channel('visitor_logs_realtime')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'visitor_logs'}, async(payload)=>{
       const newLog=payload.new;
@@ -871,10 +869,53 @@ function setupRealtime() {
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'visitor_logs'},()=>{
       refreshAll(true);
     })
-    .subscribe((status)=>{
-      if(status==='SUBSCRIBED') console.log('✅ Realtime connected.');
-    });
+    .subscribe((status)=>{ console.log('visitor_logs realtime:', status); });
+
+  // Channel 2: profiles changes (new registrations + new admins)
+  db.channel('profiles_realtime')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'profiles'}, (payload)=>{
+      const p = payload.new;
+      if (p.role === 'admin') {
+        // New admin created
+        showToast(`🛡️ New admin added: ${p.first_name} ${p.last_name}`, 'info', 5000);
+        if (activeTab === 'admins') loadAdmins();
+      } else {
+        // New regular user registered
+        showToast(`🆕 New user registered: ${p.first_name} ${p.last_name} (${p.user_type})`, 'info', 5000);
+        if (activeTab === 'users') loadUsers();
+      }
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles'}, ()=>{
+      // User blocked/activated or password changed
+      if (activeTab === 'users')  loadUsers();
+      if (activeTab === 'admins') loadAdmins();
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'profiles'}, ()=>{
+      // User or admin deleted
+      if (activeTab === 'users')  loadUsers();
+      if (activeTab === 'admins') loadAdmins();
+    })
+    .subscribe((status)=>{ console.log('profiles realtime:', status); });
 }
+
+// ── Override switchTab to track active tab ────────────────
+function switchTab(name) {
+  activeTab = name;
+  ['logs','users','admins'].forEach(t => {
+    document.getElementById('panel'+cap(t)).classList.toggle('active', t===name);
+    document.getElementById('tab'+cap(t)).classList.toggle('active', t===name);
+  });
+  if (name==='users')  loadUsers();
+  if (name==='admins') loadAdmins();
+}
+
+// ── Polling fallback every 10 seconds ────────────────────
+setInterval(() => {
+  refreshAll(true);
+  // Also refresh whichever management tab is open
+  if (activeTab === 'users')  loadUsers();
+  if (activeTab === 'admins') loadAdmins();
+}, 10000);
 
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async()=>{
