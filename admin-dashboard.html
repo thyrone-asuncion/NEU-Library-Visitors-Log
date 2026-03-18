@@ -786,9 +786,7 @@ function exportExcel() {
   <p class="meta">Exported on: ${dateStr} at ${timeStr}</p>
   <p class="meta">Total Records: ${total}</p>`;
 
-  if (filters.length > 0) {
-    html += `<p class="filter-row">Filters applied: ${filters.join(' | ')}</p>`;
-  }
+  html += '<p class="filter-row" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;padding:6px 10px;color:#92400e;"><b>Filters Applied:</b> ' + (filters.length > 0 ? filters.join(' | ') : 'None — showing all records') + '</p>';
 
   html += `<br/>
   <table border="1" cellspacing="0" cellpadding="5">
@@ -1038,7 +1036,7 @@ function exportUsersExcel() {
   html += '<p class="title">NEU Library — User List</p>';
   html += '<p class="meta">Exported on: ' + dateStr + ' at ' + timeStr + '</p>';
   html += '<p class="meta">Total Records: ' + total + '</p>';
-  if (filters.length > 0) html += '<p class="meta"><i>Filters: ' + filters.join(' | ') + '</i></p>';
+  html += '<p class="meta" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;padding:6px 10px;color:#92400e;"><b>Filters Applied:</b> ' + (filters.length > 0 ? filters.join(' &nbsp;|&nbsp; ') : 'None — showing all records') + '</p>';
   html += '<br/><table border="1" cellspacing="0"><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Email</th><th>Type</th><th>Department</th><th>Program</th><th>Status</th><th>Registered</th></tr></thead><tbody>';
   rows.forEach(r => {
     html += '<tr><td>'+r.num+'</td><td>'+r.id+'</td><td>'+r.name+'</td><td>'+r.email+'</td><td>'+r.type+'</td><td>'+r.dept+'</td><td>'+r.program+'</td><td class="'+r.status+'">'+r.status+'</td><td>'+r.created+'</td></tr>';
@@ -1084,16 +1082,18 @@ function exportUsersPDF() {
   doc.text(adminUser.name || 'Library Admin', 166, y + 5);
   y += 13;
 
-  // Filters
-  if (filters.length > 0) {
-    doc.setFillColor(255, 251, 235); doc.setDrawColor(252, 211, 77);
-    doc.roundedRect(14, y, pageW - 28, 8, 2, 2, 'FD');
-    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(146, 64, 14);
-    doc.text('Filters: ', 17, y + 5.2);
-    doc.setFont('helvetica', 'normal');
-    doc.text(filters.join('  |  '), 30, y + 5.2, { maxWidth: pageW - 46 });
-    y += 12;
-  }
+  // Filters - always shown
+  doc.setFillColor(255, 251, 235);
+  doc.setDrawColor(252, 211, 77);
+  doc.roundedRect(14, y, pageW - 28, 8, 2, 2, 'FD');
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(146, 64, 14);
+  doc.text('Filters Applied: ', 17, y + 5.2);
+  doc.setFont('helvetica', 'normal');
+  const filterText = filters.length > 0 ? filters.join('  |  ') : 'None — showing all records';
+  doc.text(filterText, 44, y + 5.2, { maxWidth: pageW - 58 });
+  y += 12;
 
   // Table
   doc.autoTable({
