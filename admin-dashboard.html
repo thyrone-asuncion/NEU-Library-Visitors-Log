@@ -111,7 +111,8 @@
     </div>
     <div class="dash-datetime" id="dashDatetime">—</div>
   </div>
-  <div class="dash-header-right">
+  <div class="dash-header-right" style="display:flex;align-items:center;gap:12px;">
+    <div class="dash-welcome" id="dashWelcome">Welcome, Admin</div>
     <button onclick="manualRefresh()" id="syncBtn" title="Sync data manually" style="
       background:rgba(255,255,255,.10);
       border:1.5px solid rgba(255,255,255,.25);
@@ -125,11 +126,10 @@
       display:flex;
       align-items:center;
       gap:6px;
-      transition:var(--transition);
+      transition:all .22s cubic-bezier(.4,0,.2,1);
     " onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.10)'">
       🔄 <span>Sync</span>
     </button>
-    <div class="dash-welcome" id="dashWelcome">Welcome, Admin</div>
   </div>
 </div>
 
