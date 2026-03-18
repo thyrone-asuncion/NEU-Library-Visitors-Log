@@ -284,6 +284,14 @@
               <option value="">All</option><option>active</option><option>blocked</option>
             </select>
           </div>
+          <div class="filter-group">
+            <label>Registered From</label>
+            <input type="date" class="filter-control" id="userDateFrom" onchange="filterUsers()" />
+          </div>
+          <div class="filter-group">
+            <label>Registered To</label>
+            <input type="date" class="filter-control" id="userDateTo" onchange="filterUsers()" />
+          </div>
           <div class="filter-group" style="min-width:auto;">
             <label>&nbsp;</label>
             <button class="btn btn-outline btn-sm" onclick="clearUserFilters()">✕ Clear</button>
@@ -953,11 +961,15 @@ function getUserExportMeta() {
   const dept    = document.getElementById('userDept').value;
   const program = document.getElementById('userProgram').value;
   const status  = document.getElementById('userStatus').value;
+  const from    = document.getElementById('userDateFrom').value;
+  const to      = document.getElementById('userDateTo').value;
   if (search)  filters.push('Search: "' + search + '"');
   if (type)    filters.push('Type: ' + type);
   if (dept)    filters.push('Department: ' + dept);
   if (program) filters.push('Program: ' + program);
   if (status)  filters.push('Status: ' + status);
+  if (from)    filters.push('Registered From: ' + from);
+  if (to)      filters.push('Registered To: ' + to);
 
   return { dateStr, timeStr, stamp, filters, total: filteredUsers.length };
 }
@@ -1145,7 +1157,7 @@ function onUserTypeFilter() {
 }
 
 function clearUserFilters() {
-  ['userSearch'].forEach(id => document.getElementById(id).value = '');
+  ['userSearch','userDateFrom','userDateTo'].forEach(id => document.getElementById(id).value = '');
   ['userType','userDept','userProgram','userStatus'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('userProgramGroup').style.display = 'none';
   filterUsers();
@@ -1157,6 +1169,8 @@ function filterUsers() {
   const dept    = document.getElementById('userDept').value;
   const program = document.getElementById('userProgram').value;
   const status  = document.getElementById('userStatus').value;
+  const from    = document.getElementById('userDateFrom').value;
+  const to      = document.getElementById('userDateTo').value;
 
   filteredUsers = allUsers.filter(u => {
     const full=`${u.first_name||''} ${u.last_name||''} ${u.id||''} ${u.email||''}`.toLowerCase();
@@ -1165,6 +1179,8 @@ function filterUsers() {
     if(dept    && u.college_dept !== dept)      return false;
     if(program && u.program !== program)        return false;
     if(status  && u.status !== status)          return false;
+    if(from    && u.created_at && u.created_at.slice(0,10) < from) return false;
+    if(to      && u.created_at && u.created_at.slice(0,10) > to)   return false;
     return true;
   });
   userPage=1;
