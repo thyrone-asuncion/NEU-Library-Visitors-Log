@@ -733,17 +733,28 @@ function exportLogs(type) {
 
 // ── CSV Export ────────────────────────────────────────────
 function exportCSV() {
-  const { stamp } = getExportMeta();
+  const { dateStr, timeStr, stamp, filters, total } = getExportMeta();
   const rows = getExportRows();
+
+  // Header info rows
+  const info = [
+    '"NEU Library — Visitor Logs"',
+    '"Exported on: ' + dateStr + ' at ' + timeStr + '"',
+    '"Total Records: ' + total + '"',
+    filters.length > 0 ? '"Filters Applied: ' + filters.join(' | ') + '"' : '"No filters applied"',
+    ''
+  ];
+
   const headers = ['#','ID','Name','Email','Purpose','Specific Purpose','Time In','Time Out','Department','Program','Status','Date'];
   const lines = rows.map(r => [
-    r.num, `"${r.id}"`, `"${r.name}"`, `"${r.email}"`,
-    `"${r.purpose}"`, `"${r.specific}"`,
-    `"${r.timeIn}"`, `"${r.timeOut}"`,
-    `"${r.dept}"`, `"${r.program}"`, r.status, r.date
+    r.num, '"'+r.id+'"', '"'+r.name+'"', '"'+r.email+'"',
+    '"'+r.purpose+'"', '"'+r.specific+'"',
+    '"'+r.timeIn+'"', '"'+r.timeOut+'"',
+    '"'+r.dept+'"', '"'+r.program+'"', r.status, r.date
   ].join(','));
-  const csv = [headers.join(','), ...lines].join('\n');
-  downloadFile(`VisitorLogs_${stamp}.csv`, new Blob([csv], {type:'text/csv'}));
+
+  const csv = [...info, headers.join(','), ...lines].join('\n');
+  downloadFile('VisitorLogs_' + stamp + '.csv', new Blob([csv], {type:'text/csv'}));
 }
 
 // ── Excel Export ──────────────────────────────────────────
@@ -998,14 +1009,25 @@ function exportUsers(type) {
 }
 
 function exportUsersCSV() {
-  const { stamp } = getUserExportMeta();
+  const { dateStr, timeStr, stamp, filters, total } = getUserExportMeta();
   const rows = getUserExportRows();
+
+  // Header info rows
+  const info = [
+    '"NEU Library — User List"',
+    '"Exported on: ' + dateStr + ' at ' + timeStr + '"',
+    '"Total Records: ' + total + '"',
+    filters.length > 0 ? '"Filters Applied: ' + filters.join(' | ') + '"' : '"No filters applied"',
+    '' // blank row before table
+  ];
+
   const headers = ['#','ID','Name','Email','Type','Department','Program','Status','Registered'];
   const lines = rows.map(r => [
     r.num, '"'+r.id+'"', '"'+r.name+'"', '"'+r.email+'"',
-    r.type, '"'+r.dept+'"', '"'+r.program+'"', r.status, r.created
+    r.type, '"'+r.dept+'"', '"'+r.program+'"', r.status, '"'+r.created+'"'
   ].join(','));
-  const csv = [headers.join(','), ...lines].join('\n');
+
+  const csv = [...info, headers.join(','), ...lines].join('\n');
   downloadFile('UserList_' + stamp + '.csv', new Blob([csv], {type:'text/csv'}));
 }
 
