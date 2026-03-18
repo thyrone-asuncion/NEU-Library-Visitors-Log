@@ -449,6 +449,27 @@
         <p>Enter your ID or email to record your visit.</p>
       </div>
 
+      <!-- Library Hours Display -->
+      <div id="hoursDisplay" style="
+        background: var(--blue-pale);
+        border: 1.5px solid #bfdbfe;
+        border-radius: var(--radius-md);
+        padding: 10px 14px;
+        margin-bottom: 20px;
+        font-size: 12px;
+        color: var(--blue-dark);
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+      ">
+        <span style="font-size:16px;flex-shrink:0;">🕐</span>
+        <div>
+          <div style="font-weight:700;margin-bottom:2px;">Library Hours</div>
+          <div>Weekdays (Mon–Fri): <strong>5:00 AM – 8:00 PM</strong></div>
+          <div>Weekends (Sat–Sun): <strong>9:00 AM – 4:00 PM</strong></div>
+        </div>
+      </div>
+
       <div class="step-indicator">
         <div class="step-dot active" id="dot1"></div>
         <div class="step-dot" id="dot2"></div>
@@ -584,7 +605,49 @@
     document.getElementById('dot2').className = 'step-dot' + (n >= 2 ? ' active' : '');
   }
 
+  // ── Library Hours Check (Philippine Time) ───────────────
+  function checkLibraryHours() {
+    const now     = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+    const day     = now.getUTCDay(); // 0=Sun, 1=Mon ... 6=Sat
+    const hour    = now.getUTCHours();
+    const minute  = now.getUTCMinutes();
+    const timeVal = hour + minute / 60; // e.g. 8:30 = 8.5
+
+    const isWeekend  = (day === 0 || day === 6);
+    const isWeekday  = !isWeekend;
+
+    // Weekdays: 5:00 AM – 8:00 PM
+    // Weekends: 9:00 AM – 4:00 PM
+    const openTime  = isWeekend ? 9  : 5;
+    const closeTime = isWeekend ? 16 : 20;
+
+    const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][day];
+    const openStr  = isWeekend ? '9:00 AM' : '5:00 AM';
+    const closeStr = isWeekend ? '4:00 PM' : '8:00 PM';
+
+    if (timeVal < openTime) {
+      return {
+        allowed: false,
+        message: `The library is not yet open. ${dayName} hours are ${openStr} – ${closeStr}. Please come back later.`
+      };
+    }
+    if (timeVal >= closeTime) {
+      return {
+        allowed: false,
+        message: `The library is now closed. ${dayName} hours are ${openStr} – ${closeStr}. See you next time!`
+      };
+    }
+    return { allowed: true };
+  }
+
   async function lookupUser() {
+    // ── Check library hours first ────────────────────────
+    const hoursCheck = checkLibraryHours();
+    if (!hoursCheck.allowed) {
+      setAlert(hoursCheck.message, 'warning');
+      return;
+    }
+
     const val   = document.getElementById('identifier').value.trim();
     const errEl = document.getElementById('identifierError');
     document.getElementById('identifier').classList.remove('error');
