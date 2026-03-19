@@ -422,7 +422,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
@@ -1393,7 +1392,6 @@ function renderUsersPage() {
         ${u.status==='active'
           ?`<button class="btn btn-danger" onclick="toggleUserStatus('${u.id}','blocked')">🚫 Block</button>`
           :`<button class="btn btn-success" onclick="toggleUserStatus('${u.id}','active')">✅ Activate</button>`}
-        <button class="btn btn-outline btn-sm" onclick="openQRModal('${u.id}','${(u.first_name+' '+(u.middle_initial?u.middle_initial+'. ':'')+u.last_name).replace(/'/g,"\'")}','${(u.college_dept||'').replace(/'/g,"\'")}','${(u.program||'').replace(/'/g,"\'")}','${u.user_type}')">QR</button>
         <button class="btn btn-danger" onclick="deleteUser('${u.id}')">🗑️ Delete</button>
       </td>
     </tr>`;
@@ -1650,189 +1648,6 @@ function switchTab(name) {
 // Use the Sync button in the header to manually refresh
 
 // ── Init ─────────────────────────────────────────────────
-// ── QR Code Functions ────────────────────────────────────
-let qrCurrentUser = null;
-
-function openQRModal(id, name, dept, program, userType) {
-  qrCurrentUser = { id, name, dept, program, userType };
-  document.getElementById('qrUserName').textContent = name;
-  document.getElementById('qrAdminPassword').value = '';
-  document.getElementById('qrPasswordError').classList.remove('show');
-  document.getElementById('qrAdminPassword').classList.remove('error');
-  document.getElementById('qrPasswordSection').style.display = 'block';
-  document.getElementById('qrDisplaySection').style.display = 'none';
-  document.getElementById('qrConfirmBtn').style.display = 'inline-flex';
-  document.getElementById('qrDownloadBtn').style.display = 'none';
-  setInlineAlert('qrModalAlert', '');
-  document.getElementById('qrCodeModal').style.display = 'flex';
-}
-
-function closeQRModal() {
-  document.getElementById('qrCodeModal').style.display = 'none';
-  qrCurrentUser = null;
-}
-
-async function confirmQRGenerate() {
-  const pw = document.getElementById('qrAdminPassword').value;
-  if (!pw) {
-    document.getElementById('qrAdminPassword').classList.add('error');
-    document.getElementById('qrPasswordError').textContent = 'Please enter your password.';
-    document.getElementById('qrPasswordError').classList.add('show');
-    return;
-  }
-
-  setInlineAlert('qrModalAlert', 'Verifying password…', 'info');
-
-  // Verify admin password
-  const { data, error } = await db.from('admins').select('password').eq('id', adminUser.id).maybeSingle();
-  if (error || !data || data.password !== pw) {
-    setInlineAlert('qrModalAlert', 'Incorrect password. Please try again.', 'error');
-    document.getElementById('qrAdminPassword').classList.add('error');
-    return;
-  }
-
-  setInlineAlert('qrModalAlert', '');
-
-  // Generate QR content: ID|FullName|College|Program
-  const u = qrCurrentUser;
-  const qrContent = [u.id, u.name, u.dept, u.program || u.userType].join('|');
-
-  // Clear previous QR and generate new one
-  const qrContainer = document.getElementById('qrCanvas');
-  qrContainer.innerHTML = '';
-  new QRCode(qrContainer, {
-    text: qrContent,
-    width: 220,
-    height: 220,
-    colorDark: '#1a3a5f',
-    colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H
-  });
-
-  // Show QR section
-  document.getElementById('qrPasswordSection').style.display = 'none';
-  document.getElementById('qrDisplaySection').style.display = 'block';
-  document.getElementById('qrConfirmBtn').style.display = 'none';
-  document.getElementById('qrDownloadBtn').style.display = 'inline-flex';
-}
-
-async function downloadQRPDF() {
-  const u = qrCurrentUser;
-  const { jsPDF } = window.jspdf;
-
-  // Standard CR80 ID card size: 85.6mm x 54mm (landscape)
-  const cardW = 85.6;
-  const cardH = 54;
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [cardW, cardH] });
-
-  const now   = new Date();
-  const phNow = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-  const stamp = phNow.toISOString().replace(/[:.]/g,'-').slice(0,19).replace('T','_');
-
-  // ── Background ───────────────────────────────────────────
-  // Dark blue left section
-  doc.setFillColor(26, 58, 95);
-  doc.rect(0, 0, 32, cardH, 'F');
-
-  // White right section
-  doc.setFillColor(255, 255, 255);
-  doc.rect(32, 0, cardW - 32, cardH, 'F');
-
-  // Gold accent line between sections
-  doc.setFillColor(212, 175, 55);
-  doc.rect(31, 0, 1.5, cardH, 'F');
-
-  // Gold top border
-  doc.setFillColor(212, 175, 55);
-  doc.rect(0, 0, cardW, 1.5, 'F');
-
-  // Gold bottom border
-  doc.rect(0, cardH - 1.5, cardW, 1.5, 'F');
-
-  // ── Left Section — QR Code ───────────────────────────────
-  // qrcodejs generates an img tag inside the container
-  const qrContainer = document.getElementById('qrCanvas');
-  const qrImgEl = qrContainer.querySelector('img') || qrContainer.querySelector('canvas');
-  const qrImg = qrImgEl ? qrImgEl.src || qrImgEl.toDataURL('image/png') : '';
-  const qrSize = 26;
-  const qrX    = (32 - qrSize) / 2;
-  const qrY    = (cardH - qrSize) / 2 - 2;
-  doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize);
-
-  // "SCAN ME" text under QR
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(5);
-  doc.setTextColor(212, 175, 55);
-  doc.text('SCAN ME', 16, qrY + qrSize + 4, { align: 'center' });
-
-  // ── Right Section — User Info ────────────────────────────
-  let y = 7;
-  const x = 36;
-
-  // Library name
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(26, 58, 95);
-  doc.text('NEU LIBRARY', x, y);
-
-  // Subtitle
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(5);
-  doc.setTextColor(130, 130, 130);
-  doc.text('New Era University', x, y + 4);
-
-  // Gold divider
-  doc.setFillColor(212, 175, 55);
-  doc.rect(x, y + 6, cardW - x - 4, 0.4, 'F');
-
-  y += 10;
-
-  // Name
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(26, 58, 95);
-  // Wrap long names
-  const nameLines = doc.splitTextToSize(u.name, cardW - x - 4);
-  doc.text(nameLines, x, y);
-  y += nameLines.length * 5;
-
-  // ID
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
-  doc.setTextColor(80, 80, 80);
-  doc.text(u.id, x, y);
-  y += 5;
-
-  // User type badge
-  doc.setFillColor(240, 245, 252);
-  doc.setDrawColor(191, 219, 254);
-  doc.roundedRect(x, y, 18, 5, 1, 1, 'FD');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(5);
-  doc.setTextColor(26, 58, 95);
-  doc.text(u.userType.toUpperCase(), x + 9, y + 3.5, { align: 'center' });
-  y += 7;
-
-  // Department
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(5.5);
-  doc.setTextColor(100, 100, 100);
-  const deptLines = doc.splitTextToSize(u.dept || '—', cardW - x - 4);
-  doc.text(deptLines, x, y);
-  y += deptLines.length * 4;
-
-  // Program (students only)
-  if (u.program && u.userType === 'Student') {
-    doc.setFontSize(5);
-    doc.setTextColor(130, 130, 130);
-    const progLines = doc.splitTextToSize(u.program, cardW - x - 4);
-    doc.text(progLines, x, y);
-  }
-
-  doc.save('LibraryID_' + u.id + '_' + stamp + '.pdf');
-  showToast('Library ID card PDF downloaded!', 'success', 2500);
-}
-
 document.addEventListener('DOMContentLoaded', async()=>{
   // Set today's date BEFORE loading so filter applies immediately
   const today=getPHDate();
@@ -1842,37 +1657,5 @@ document.addEventListener('DOMContentLoaded', async()=>{
   setupRealtime();
 });
 </script>
-<!-- QR Code Modal -->
-<div class="modal-overlay" id="qrCodeModal" style="display:none;">
-  <div class="modal" style="max-width:420px;">
-    <div class="modal-header">
-      <h3>Generate QR Code</h3>
-      <button class="modal-close" onclick="closeQRModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">
-        Generating QR for: <strong id="qrUserName">—</strong>
-      </p>
-      <div id="qrPasswordSection">
-        <div class="form-group">
-          <label for="qrAdminPassword">Enter Your Admin Password to Confirm <span class="req">*</span></label>
-          <input type="password" id="qrAdminPassword" class="form-control" placeholder="Your admin password" />
-          <div class="field-error" id="qrPasswordError">Incorrect password.</div>
-        </div>
-        <div id="qrModalAlert" style="margin-bottom:12px;"></div>
-      </div>
-      <div id="qrDisplaySection" style="display:none;text-align:center;">
-        <div id="qrCanvas" style="display:flex;justify-content:center;border-radius:var(--radius-md);overflow:hidden;"></div>
-        <p style="font-size:12px;color:var(--gray-500);margin-top:10px;">QR Code generated successfully</p>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeQRModal()">Cancel</button>
-      <button class="btn btn-primary" id="qrConfirmBtn" onclick="confirmQRGenerate()">Generate QR</button>
-      <button class="btn btn-gold" id="qrDownloadBtn" onclick="downloadQRPDF()" style="display:none;">Download PDF</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
