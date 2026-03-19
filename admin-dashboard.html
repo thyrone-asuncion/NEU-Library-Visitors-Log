@@ -1402,8 +1402,23 @@ function renderUsersPage() {
 async function toggleUserStatus(id, newStatus) {
   const{error}=await db.from('profiles').update({status:newStatus}).eq('id',id);
   if(error){showToast('Failed to update status.','error');return;}
-  showToast(`User ${newStatus==='blocked'?'blocked':'activated'} successfully.`,'success');
+
+  // If blocking, automatically check out the user if they are currently IN
+  if(newStatus === 'blocked') {
+    const today = getPHDate();
+    const now   = new Date().toISOString();
+    await db.from('visitor_logs')
+      .update({ time_out: now, status: 'OUT' })
+      .eq('user_id', id)
+      .eq('status', 'IN')
+      .eq('date', today);
+    showToast('User blocked and automatically checked out.', 'warning', 4000);
+  } else {
+    showToast('User activated successfully.', 'success');
+  }
+
   loadUsers();
+  loadStats();
 }
 
 async function deleteUser(id) {
