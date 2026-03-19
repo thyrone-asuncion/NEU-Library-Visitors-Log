@@ -422,7 +422,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
@@ -1697,12 +1697,16 @@ async function confirmQRGenerate() {
   const u = qrCurrentUser;
   const qrContent = [u.id, u.name, u.dept, u.program || u.userType].join('|');
 
-  // Draw QR on canvas
-  const canvas = document.getElementById('qrCanvas');
-  await QRCode.toCanvas(canvas, qrContent, {
+  // Clear previous QR and generate new one
+  const qrContainer = document.getElementById('qrCanvas');
+  qrContainer.innerHTML = '';
+  new QRCode(qrContainer, {
+    text: qrContent,
     width: 220,
-    margin: 2,
-    color: { dark: '#1a3a5f', light: '#ffffff' }
+    height: 220,
+    colorDark: '#1a3a5f',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
   });
 
   // Show QR section
@@ -1746,8 +1750,10 @@ async function downloadQRPDF() {
   doc.rect(0, cardH - 1.5, cardW, 1.5, 'F');
 
   // ── Left Section — QR Code ───────────────────────────────
-  const canvas = document.getElementById('qrCanvas');
-  const qrImg  = canvas.toDataURL('image/png');
+  // qrcodejs generates an img tag inside the container
+  const qrContainer = document.getElementById('qrCanvas');
+  const qrImgEl = qrContainer.querySelector('img') || qrContainer.querySelector('canvas');
+  const qrImg = qrImgEl ? qrImgEl.src || qrImgEl.toDataURL('image/png') : '';
   const qrSize = 26;
   const qrX    = (32 - qrSize) / 2;
   const qrY    = (cardH - qrSize) / 2 - 2;
@@ -1856,7 +1862,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
         <div id="qrModalAlert" style="margin-bottom:12px;"></div>
       </div>
       <div id="qrDisplaySection" style="display:none;text-align:center;">
-        <canvas id="qrCanvas" style="border-radius:var(--radius-md);"></canvas>
+        <div id="qrCanvas" style="display:flex;justify-content:center;border-radius:var(--radius-md);overflow:hidden;"></div>
         <p style="font-size:12px;color:var(--gray-500);margin-top:10px;">QR Code generated successfully</p>
       </div>
     </div>
