@@ -605,8 +605,8 @@
     } else {
       // Validate ID format strictly based on selected user type
       // Student:  XX-XXXXX-XXX  (2 digits - 5 digits - 3 digits)
-      // Faculty:  F + 4 digits  (e.g. F0001)
-      // Employee: E + 4 digits  (e.g. E0001)
+      // Faculty:  F + exactly 5 digits (e.g. F00001)
+      // Employee: E + exactly 5 digits (e.g. E00001)
       const studentFormat  = /^\d{2}-\d{5}-\d{3}$/.test(id);
       const facultyFormat  = /^F\d{4}$/i.test(id);
       const employeeFormat = /^E\d{4}$/i.test(id);
@@ -614,9 +614,9 @@
       if (selectedType === 'Student' && !studentFormat) {
         showErr('idNumber', 'Student ID must be XX-XXXXX-XXX (e.g. 24-00001-001). 2 digits, dash, 5 digits, dash, 3 digits.'); ok = false;
       } else if (selectedType === 'Faculty' && !facultyFormat) {
-        showErr('idNumber', 'Faculty ID must be F followed by exactly 4 digits (e.g. F0001).'); ok = false;
+        showErr('idNumber', 'Faculty ID must be F followed by exactly 5 digits (e.g. F00001).'); ok = false;
       } else if (selectedType === 'Employee' && !employeeFormat) {
-        showErr('idNumber', 'Employee ID must be E followed by exactly 4 digits (e.g. E0001).'); ok = false;
+        showErr('idNumber', 'Employee ID must be E followed by exactly 5 digits (e.g. E00001).'); ok = false;
       }
     }
     const email = document.getElementById('email').value.trim();
