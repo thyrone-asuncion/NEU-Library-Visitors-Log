@@ -608,8 +608,8 @@
       // Faculty:  F + exactly 5 digits (e.g. F00001)
       // Employee: E + exactly 5 digits (e.g. E00001)
       const studentFormat  = /^\d{2}-\d{5}-\d{3}$/.test(id);
-      const facultyFormat  = /^F\d{4}$/i.test(id);
-      const employeeFormat = /^E\d{4}$/i.test(id);
+      const facultyFormat  = /^F\d{5}$/i.test(id);
+      const employeeFormat = /^E\d{5}$/i.test(id);
 
       if (selectedType === 'Student' && !studentFormat) {
         showErr('idNumber', 'Student ID must be XX-XXXXX-XXX (e.g. 24-00001-001). 2 digits, dash, 5 digits, dash, 3 digits.'); ok = false;
