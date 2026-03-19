@@ -179,9 +179,12 @@ function formatDwell(minutes) {
 //  ID / Email Validation
 // ============================================================
 function validateID(id) {
-  const student = /^\d{2}-\d{5}-\d{3}$/;
-  const faculty  = /^F\d+$/i;
-  const employee = /^E\d+$/i;
+  // Student:  XX-XXXXX-XXX  (2 digits - 5 digits - 3 digits)
+  // Faculty:  F + exactly 5 digits (e.g. F00001)
+  // Employee: E + exactly 5 digits (e.g. E00001)
+  const student  = /^\d{2}-\d{5}-\d{3}$/;
+  const faculty  = /^F\d{5}$/i;
+  const employee = /^E\d{5}$/i;
   return student.test(id) || faculty.test(id) || employee.test(id);
 }
 

@@ -309,7 +309,7 @@
         <div class="form-group">
           <label for="idNumber">ID Number <span class="req">*</span></label>
           <input type="text" id="idNumber" class="form-control"
-                 placeholder="e.g. 24-00001-001 · F0001 · E0001" />
+                 placeholder="e.g. 24-00001-001 · F00001 · E00001" />
           <div class="field-hint" id="idHint">Student: XX-XXXXX-XXX &nbsp;|&nbsp; Faculty: FX… &nbsp;|&nbsp; Employee: EX…</div>
           <div class="field-error" id="idNumberError">Invalid ID format.</div>
         </div>
@@ -539,8 +539,8 @@
     el.classList.add('selected');
     const hints = {
       Student:  'Format: XX-XXXXX-XXX (e.g. 24-00001-001)',
-      Faculty:  'Format: FX… (e.g. F0001)',
-      Employee: 'Format: EX… (e.g. E0001)'
+      Faculty:  'Format: F + 5 digits (e.g. F00001)',
+      Employee: 'Format: E + 5 digits (e.g. E00001)'
     };
     document.getElementById('idHint').textContent = hints[type] || '';
   }
@@ -602,8 +602,22 @@
     const id = document.getElementById('idNumber').value.trim();
     if (!id) {
       showErr('idNumber', 'ID number is required.'); ok = false;
-    } else if (!validateID(id)) {
-      showErr('idNumber', 'Invalid ID format for the selected user type.'); ok = false;
+    } else {
+      // Validate ID format strictly based on selected user type
+      // Student:  XX-XXXXX-XXX  (2 digits - 5 digits - 3 digits)
+      // Faculty:  F + 4 digits  (e.g. F0001)
+      // Employee: E + 4 digits  (e.g. E0001)
+      const studentFormat  = /^\d{2}-\d{5}-\d{3}$/.test(id);
+      const facultyFormat  = /^F\d{4}$/i.test(id);
+      const employeeFormat = /^E\d{4}$/i.test(id);
+
+      if (selectedType === 'Student' && !studentFormat) {
+        showErr('idNumber', 'Student ID must be XX-XXXXX-XXX (e.g. 24-00001-001). 2 digits, dash, 5 digits, dash, 3 digits.'); ok = false;
+      } else if (selectedType === 'Faculty' && !facultyFormat) {
+        showErr('idNumber', 'Faculty ID must be F followed by exactly 4 digits (e.g. F0001).'); ok = false;
+      } else if (selectedType === 'Employee' && !employeeFormat) {
+        showErr('idNumber', 'Employee ID must be E followed by exactly 4 digits (e.g. E0001).'); ok = false;
+      }
     }
     const email = document.getElementById('email').value.trim();
     if (!email) {
