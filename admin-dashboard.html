@@ -679,8 +679,12 @@ function filterLogs() {
 }
 
 function clearLogFilters() {
-  ['logSearch','logDateFrom','logDateTo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('logSearch').value = '';
   ['logPurpose','logDept','logStatus'].forEach(id=>document.getElementById(id).value='');
+  // Reset dates to today instead of empty
+  const today = getPHDate();
+  document.getElementById('logDateFrom').value = today;
+  document.getElementById('logDateTo').value   = today;
   filterLogs();
 }
 
@@ -1630,10 +1634,11 @@ function switchTab(name) {
 
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async()=>{
-  await refreshAll();
+  // Set today's date BEFORE loading so filter applies immediately
   const today=getPHDate();
   document.getElementById('logDateFrom').value=today;
   document.getElementById('logDateTo').value=today;
+  await refreshAll();
   setupRealtime();
 });
 </script>
