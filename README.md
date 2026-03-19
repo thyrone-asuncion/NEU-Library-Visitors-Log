@@ -7,6 +7,8 @@ A web-based Library Visitor Log System for tracking student, faculty, and employ
 
 ## Live Site
 
+**Main Link:** https://neu-library-visitors-log-system.vercel.app/
+
 | Page | URL |
 |---|---|
 | **Visitor Login / Logout** | https://neu-library-visitors-log-system.vercel.app/ |
